@@ -14572,7 +14572,7 @@ def load_telecom_sensitivity_model(url: str, refresh_nonce: int = 0) -> dict:
 def load_telecom_tower_eval_model(url: str, refresh_nonce: int = 0) -> dict:
     def fallback_model(error: Exception | None = None) -> dict:
         summary = {
-            "title": "Dashboard ejecutivo - Evaluación eólica para torres telecom",
+            "title": "Propuesta técnica de generación eólica para torres telecom",
             "consumo_mensual": 3238.0,
             "cobertura_objetivo": 1.0,
             "costo_ponderado_actual": 429.0,
@@ -14619,7 +14619,7 @@ def load_telecom_tower_eval_model(url: str, refresh_nonce: int = 0) -> dict:
             return ""
 
     summary = {
-        "title": cell(0, 0) or "Dashboard ejecutivo - Evaluación eólica para torres telecom",
+        "title": cell(0, 0) or "Propuesta técnica de generación eólica para torres telecom",
         "consumo_mensual": parse_float_local(cell(3, 1), 0.0),
         "cobertura_objetivo": parse_percent_local(cell(3, 4), 1.0),
         "costo_ponderado_actual": parse_money_clp_robusto(cell(3, 7)) or parse_float_local(cell(3, 7), 0.0),
@@ -16184,9 +16184,9 @@ def render_telecom_tower_eval_analysis():
     st.markdown(
         f"""
         <div class="telecom-hero">
-          <p class="telecom-k">Sub bloque 5 · Modelo ejecutivo telecom</p>
-          <h2 class="telecom-t">Evaluación eólica para torres telecom</h2>
-          <p class="telecom-s">{html.escape(str(summary["title"]))}. Cinco etapas para presentar el caso al cliente: sitio y demanda, recurso eólico, producción, propuesta técnico-económica y retorno financiero.</p>
+          <p class="telecom-k">Propuesta técnica · Generación eólica telecom</p>
+          <h2 class="telecom-t">Propuesta técnica de generación eólica para torres telecom</h2>
+          <p class="telecom-s">Modelo ejecutivo para presentar una solución de generación eólica aplicada a PoP telecom. Ordena el caso técnico-comercial por sitio seleccionado, recurso eólico disponible, producción esperada, recomendación de turbina, CAPEX instalado y plan de ejecución.</p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -16196,6 +16196,22 @@ def render_telecom_tower_eval_analysis():
             "Google Sheets no respondió a tiempo. El Sub bloque 5 está usando una copia base de los últimos valores analizados "
             "para mantener operativo el tablero. Usa el botón de refrescar datos para reintentar la lectura online."
         )
+
+    def render_active_pop_note(context_label: str = "esta pestaña") -> None:
+        active_pop = str(st.session_state.get("telecom_client_selected_pop", "") or "").strip()
+        if active_pop:
+            st.markdown(
+                f"""
+                <div class="telecom-note">
+                  <b>PoP activo:</b> {html.escape(active_pop)} · selección definida en
+                  <b>01 Perfil del Sitio</b>. Los cálculos y visualizaciones de {html.escape(context_label)}
+                  usan esta selección como caso vigente.
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        else:
+            st.info("Selecciona un PoP en 01 Perfil del Sitio para fijar el caso técnico de generación eólica.")
 
     def render_wind_csv_analysis_tab() -> None:
         def _clean_numeric_series(series: pd.Series) -> pd.Series:
@@ -18637,6 +18653,7 @@ def render_telecom_tower_eval_analysis():
         return
 
     if selected_telecom_market_tab == "02 Recurso de Viento":
+        render_active_pop_note("recurso eólico")
         render_wind_csv_analysis_tab()
         return
 
@@ -18649,10 +18666,12 @@ def render_telecom_tower_eval_analysis():
         return
 
     if selected_telecom_market_tab == "05 CAPEX Instalado":
+        render_active_pop_note("CAPEX instalado")
         render_telecom_capex_supply_installation_tab()
         return
 
     if selected_telecom_market_tab == "06 Ejecución de proyecto":
+        render_active_pop_note("ejecución de proyecto")
         render_telecom_project_execution_tab()
         return
 
@@ -18694,6 +18713,7 @@ def render_telecom_tower_eval_analysis():
     lifetime_value = (rec_saving * 15) - rec_capex
 
     if selected_telecom_market_tab == "03 Producción por Turbina":
+        render_active_pop_note("producción por turbina")
         section(
             "03 · Producción por turbina",
             "Curva neta, potencia nominal y operación",
@@ -22555,10 +22575,6 @@ capex_total_real_clp = load_capex_total_real_clp(capex_url, refresh_nonce=data_r
 capex_total_integrado_real_clp = float(capex_total_real_clp or capex_total_clp) + direccion_total_clp
 
 # =========================
-# HEADER
-# =========================
-render_inputs_main_hero()
-
 total_items = len(df_capex)
 total_categorias = df_cat["Categoria"].nunique()
 cat_top = df_cat.iloc[0]["Categoria"] if total_categorias > 0 else "-"
