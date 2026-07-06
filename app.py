@@ -16191,11 +16191,8 @@ def render_telecom_tower_eval_analysis():
         """,
         unsafe_allow_html=True,
     )
-    if model.get("source_mode") == "fallback":
-        st.warning(
-            "Google Sheets no respondió a tiempo. El Sub bloque 5 está usando una copia base de los últimos valores analizados "
-            "para mantener operativo el tablero. Usa el botón de refrescar datos para reintentar la lectura online."
-        )
+    # En la version cliente no mostramos alertas tecnicas de fallback:
+    # la app conserva datos base para continuidad si Google Sheets responde lento.
 
     def render_active_pop_note(context_label: str = "esta pestaña") -> None:
         active_pop = str(st.session_state.get("telecom_client_selected_pop", "") or "").strip()
