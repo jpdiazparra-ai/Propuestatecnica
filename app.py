@@ -19622,13 +19622,33 @@ def render_telecom_scenario_simulator(
         ]
         pop_options = list(dict.fromkeys(pop_options))
         if pop_options:
-            selected_pop = st.selectbox(
-                "PoP / sitio",
-                options=pop_options,
-                index=0,
-                key="sim6_pop_selector",
-                help="Lista cargada desde el CSV maestro de sitios.",
+            profile_selected_pop = str(st.session_state.get("telecom_client_selected_pop", "") or "").strip()
+            profile_selected_key = normalize_key(profile_selected_pop)
+            selected_pop = next(
+                (
+                    option
+                    for option in pop_options
+                    if normalize_key(option) == profile_selected_key
+                    or (profile_selected_key and profile_selected_key in normalize_key(option))
+                    or (normalize_key(option) and normalize_key(option) in profile_selected_key)
+                ),
+                pop_options[0],
             )
+            st.session_state["telecom_client_selected_pop"] = selected_pop
+            if profile_selected_pop:
+                st.markdown(
+                    f"""
+                    <div class="telecom-note">
+                      <b>POP activo para recomendación comercial:</b> {html.escape(selected_pop)}.
+                      La selección se controla desde <b>01 Perfil del Sitio</b>.
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.info(
+                    f"Recomendación comercial usando {selected_pop}. Para cambiar el POP, selecciona el sitio en 01 Perfil del Sitio."
+                )
             site_matches = proposal_site_options[proposal_site_options[pop_col].astype(str).str.strip() == selected_pop]
             if not site_matches.empty:
                 selected_site_row = site_matches.iloc[0]
