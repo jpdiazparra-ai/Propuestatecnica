@@ -17966,6 +17966,11 @@ def render_telecom_tower_eval_analysis():
         "Resumen Ejecutivo": "06 Ejecución de proyecto",
         "07 Resumen": "06 Ejecución de proyecto",
     }
+    if "telecom_client_bootstrapped" not in st.session_state:
+        st.session_state["telecom_client_bootstrapped"] = True
+        st.session_state["telecom_market_tab_selector"] = telecom_market_tabs[0]
+        st.session_state["telecom_client_selected_pop"] = ""
+        st.session_state.pop("site_demand_pop_selector", None)
     for nav_key in ("telecom_market_tab_selector", "telecom_market_tab_selector__sticky"):
         current_tab_value = st.session_state.get(nav_key)
         if current_tab_value in telecom_market_tab_aliases:
@@ -18046,9 +18051,9 @@ def render_telecom_tower_eval_analysis():
             ]
             pop_options_tab = list(dict.fromkeys(pop_options_tab))
             if pop_options_tab:
+                placeholder_pop = "Selecciona una alternativa"
                 stored_pop_tab = str(
                     st.session_state.get("telecom_client_selected_pop")
-                    or st.session_state.get("site_demand_pop_selector")
                     or ""
                 ).strip()
                 stored_pop_key = normalize_key(stored_pop_tab)
@@ -18060,21 +18065,31 @@ def render_telecom_tower_eval_analysis():
                         or (stored_pop_key and stored_pop_key in option_key)
                         or (option_key and option_key in stored_pop_key)
                     ):
-                        default_pop_idx = option_idx
+                        default_pop_idx = option_idx + 1
                         break
                 selected_pop_tab = st.selectbox(
                     "PoP / sitio",
-                    options=pop_options_tab,
+                    options=[placeholder_pop] + pop_options_tab,
                     index=default_pop_idx,
                     key="site_demand_pop_selector",
                     help="Lista cargada desde el CSV maestro de sitios.",
                 )
-                st.session_state["telecom_client_selected_pop"] = selected_pop_tab
-                site_matches_tab = proposal_site_options_tab[
-                    proposal_site_options_tab[pop_col_tab].astype(str).str.strip() == selected_pop_tab
-                ]
-                if not site_matches_tab.empty:
-                    selected_site_row_tab = site_matches_tab.iloc[0]
+                if selected_pop_tab == placeholder_pop:
+                    st.session_state["telecom_client_selected_pop"] = ""
+                    for analysis_key in (
+                        "telecom_00_analysis_recommended",
+                        "telecom_00_analysis_sim_df",
+                        "telecom_00_analysis_context",
+                    ):
+                        st.session_state.pop(analysis_key, None)
+                    st.info("Selecciona una alternativa PoP / sitio para cargar la base técnica y económica del caso.")
+                else:
+                    st.session_state["telecom_client_selected_pop"] = selected_pop_tab
+                    site_matches_tab = proposal_site_options_tab[
+                        proposal_site_options_tab[pop_col_tab].astype(str).str.strip() == selected_pop_tab
+                    ]
+                    if not site_matches_tab.empty:
+                        selected_site_row_tab = site_matches_tab.iloc[0]
 
         def selected_site_tab_value(candidates: list[str], default: str = "") -> str:
             if selected_site_row_tab.empty:
@@ -19756,31 +19771,31 @@ def render_telecom_scenario_simulator(
         if pop_options:
             profile_selected_pop = str(st.session_state.get("telecom_client_selected_pop", "") or "").strip()
             profile_selected_key = normalize_key(profile_selected_pop)
-            selected_pop = next(
-                (
-                    option
-                    for option in pop_options
-                    if normalize_key(option) == profile_selected_key
-                    or (profile_selected_key and profile_selected_key in normalize_key(option))
-                    or (normalize_key(option) and normalize_key(option) in profile_selected_key)
-                ),
-                pop_options[0],
-            )
-            st.session_state["telecom_client_selected_pop"] = selected_pop
+            selected_pop = ""
             if profile_selected_pop:
-                st.markdown(
-                    f"""
-                    <div class="telecom-note">
-                      <b>POP activo para recomendación comercial:</b> {html.escape(selected_pop)}.
-                      La selección se controla desde <b>01 Perfil del Sitio</b>.
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
+                selected_pop = next(
+                    (
+                        option
+                        for option in pop_options
+                        if normalize_key(option) == profile_selected_key
+                        or (profile_selected_key and profile_selected_key in normalize_key(option))
+                        or (normalize_key(option) and normalize_key(option) in profile_selected_key)
+                    ),
+                    "",
                 )
-            else:
-                st.info(
-                    f"Recomendación comercial usando {selected_pop}. Para cambiar el POP, selecciona el sitio en 01 Perfil del Sitio."
-                )
+            if not selected_pop:
+                st.info("Selecciona un PoP / sitio en 01 Perfil del Sitio para habilitar la recomendación comercial.")
+                return
+            st.session_state["telecom_client_selected_pop"] = selected_pop
+            st.markdown(
+                f"""
+                <div class="telecom-note">
+                  <b>POP activo para recomendación comercial:</b> {html.escape(selected_pop)}.
+                  La selección se controla desde <b>01 Perfil del Sitio</b>.
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
             site_matches = proposal_site_options[proposal_site_options[pop_col].astype(str).str.strip() == selected_pop]
             if not site_matches.empty:
                 selected_site_row = site_matches.iloc[0]
