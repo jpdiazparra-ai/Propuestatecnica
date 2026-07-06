@@ -12428,15 +12428,6 @@ def _telecom_score(series: pd.Series, higher_is_better: bool = False) -> pd.Seri
 
 
 def render_telecom_capex_supply_installation_tab() -> None:
-    refresh_col, source_col = st.columns([0.28, 0.72])
-    with refresh_col:
-        if st.button("Actualizar CAPEX desde URL", key="refresh_capex_05", use_container_width=True):
-            clear_turbine_capex_caches()
-            st.session_state["data_refresh_nonce"] = int(st.session_state.get("data_refresh_nonce", 0)) + 1
-            st.rerun()
-    with source_col:
-        st.caption(f"Fuente CAPEX: {TURBINE_CAPEX_SUPPLY_INSTALLATION_CSV_URL_DEFAULT}")
-
     capex_df = load_turbine_capex_supply_installation(refresh_nonce=data_refresh_nonce).copy()
     wbs_df = load_turbine_capex_wbs_long(refresh_nonce=data_refresh_nonce).copy()
     mounting_detail_df = load_turbine_capex_mounting_detail(refresh_nonce=data_refresh_nonce).copy()
@@ -18040,11 +18031,6 @@ def render_telecom_tower_eval_analysis():
     criterio = "Balance técnico-económico"
 
     if selected_telecom_market_tab == "01 Perfil del Sitio":
-        section(
-            "01 · Perfil del sitio",
-            "Base del caso técnico-comercial del PoP",
-            "Selecciona el sitio que se evaluará ante el cliente. Esta vista consolida ubicación, demanda, costo energético y mix operativo para construir una propuesta eólica trazable desde la base maestra.",
-        )
         site_data_view = site_data.copy()
         selected_site_row_tab = pd.Series(dtype=object)
         try:
@@ -18103,6 +18089,9 @@ def render_telecom_tower_eval_analysis():
                     ]
                     if not site_matches_tab.empty:
                         selected_site_row_tab = site_matches_tab.iloc[0]
+
+        if selected_site_row_tab.empty:
+            return
 
         def selected_site_tab_value(candidates: list[str], default: str = "") -> str:
             if selected_site_row_tab.empty:
@@ -18799,11 +18788,6 @@ def render_telecom_tower_eval_analysis():
 
     if selected_telecom_market_tab == "03 Producción por Turbina":
         render_active_pop_note("producción por turbina")
-        section(
-            "03 · Producción por turbina",
-            "Producción esperada de generación eólica",
-            "Convierte el recurso del sitio en energía útil por alternativa. La lectura permite comparar potencia, factor planta, producción anual y ajuste operativo antes de cerrar la recomendación técnica.",
-        )
 
         def resource_row(name: str) -> pd.Series | None:
             matches = resource_df[resource_df["Variable"].astype(str).str.casefold() == name.casefold()]
