@@ -17932,10 +17932,26 @@ def render_telecom_tower_eval_analysis():
             ]
             pop_options_tab = list(dict.fromkeys(pop_options_tab))
             if pop_options_tab:
+                stored_pop_tab = str(
+                    st.session_state.get("telecom_client_selected_pop")
+                    or st.session_state.get("site_demand_pop_selector")
+                    or ""
+                ).strip()
+                stored_pop_key = normalize_key(stored_pop_tab)
+                default_pop_idx = 0
+                for option_idx, option in enumerate(pop_options_tab):
+                    option_key = normalize_key(option)
+                    if (
+                        option_key == stored_pop_key
+                        or (stored_pop_key and stored_pop_key in option_key)
+                        or (option_key and option_key in stored_pop_key)
+                    ):
+                        default_pop_idx = option_idx
+                        break
                 selected_pop_tab = st.selectbox(
                     "PoP / sitio",
                     options=pop_options_tab,
-                    index=0,
+                    index=default_pop_idx,
                     key="site_demand_pop_selector",
                     help="Lista cargada desde el CSV maestro de sitios.",
                 )
@@ -25319,22 +25335,5 @@ def render_input_thousands_hint(value: float | int, prefix: str = ""):
 # =========================
 # APP CLIENTE · MERCADO Y PROPUESTA COMERCIAL
 # =========================
-
-st.markdown(
-    """
-    <style>
-    .client-market-head{border-radius:22px;padding:22px 24px;border:1px solid rgba(203,213,225,.72);background:linear-gradient(135deg,#FFFFFF 0%,#F8FBFF 58%,#EEFDF9 100%);box-shadow:0 14px 34px rgba(15,23,42,.07);margin:0 0 18px;}
-    .client-market-k{margin:0 0 7px;font-size:11px;font-weight:950;letter-spacing:.12em;text-transform:uppercase;color:#3d5a80;}
-    .client-market-t{margin:0;color:#293241;font-size:30px;line-height:1.04;font-weight:950;}
-    .client-market-s{margin:10px 0 0;color:#475569;font-size:13px;line-height:1.45;font-weight:760;max-width:920px;}
-    </style>
-    <div class="client-market-head">
-      <p class="client-market-k">Vista cliente</p>
-      <h1 class="client-market-t">04 · Mercado y Propuesta Comercial</h1>
-      <p class="client-market-s">Aplicación independiente para revisar perfil de sitio, recurso eólico, producción, recomendación comercial, CAPEX instalado, ejecución y resumen ejecutivo del caso telecom.</p>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
 
 render_telecom_tower_eval_analysis()
