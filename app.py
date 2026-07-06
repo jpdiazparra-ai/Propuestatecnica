@@ -12652,39 +12652,45 @@ def render_telecom_capex_supply_installation_tab() -> None:
 
     if not subtotal_df.empty:
         st.markdown(
-            '<p class="capex-panel-title">Costo por bloque WBS y área CAPEX</p>'
-            '<p class="capex-panel-sub">Lectura desde 03_CAPEX_WBS_USD_CLP: compara los subtotales principales desde la columna B y separa suministro versus montaje según Criterio Resumen.</p>',
+            '<p class="capex-panel-title">Costo por bloque WBS</p>'
+            '<p class="capex-panel-sub">Lectura desde 03_CAPEX_WBS_USD_CLP: compara subtotales principales por bloque. El color es neutral porque este gráfico no representa el subtotal binario suministro/montaje.</p>',
             unsafe_allow_html=True,
         )
         block_df = subtotal_df.copy()
         block_df = block_df[block_df["Monto CLP"] > 0].sort_values("Monto CLP", ascending=True)
         block_df["Bloque WBS"] = block_df["Partida"].map(lambda value: short_label(value, 48))
-        fig_blocks = px.bar(
-            block_df,
-            x="Monto CLP",
-            y="Bloque WBS",
-            color="Área CAPEX",
+        fig_blocks = go.Figure(go.Bar(
+            x=block_df["Monto CLP"],
+            y=block_df["Bloque WBS"],
             orientation="h",
-            color_discrete_map={"CAPEX suministro": palette["blue"], "CAPEX montaje": palette["orange"]},
+            name="Bloque WBS",
+            marker_color="#6B7A90",
             text=block_df["Monto CLP"].map(format_clp),
-            custom_data=["Partida", "Clasificación", "Criterio Resumen", "Criterio cálculo"],
-        )
-        fig_blocks.update_traces(
             textposition="outside",
             cliponaxis=False,
+            customdata=np.stack(
+                [
+                    block_df["Partida"],
+                    block_df["Área CAPEX"],
+                    block_df["Clasificación"],
+                    block_df["Criterio Resumen"],
+                    block_df["Criterio cálculo"],
+                ],
+                axis=-1,
+            ),
             hovertemplate=(
                 "<b>%{customdata[0]}</b><br>"
-                "Área: %{fullData.name}<br>"
+                "Clasificación contable: %{customdata[1]}<br>"
                 "Monto: $%{x:,.0f} CLP<br>"
-                "Clasificación: %{customdata[1]}<br>"
-                "Criterio resumen: %{customdata[2]}<br>"
-                "Criterio cálculo: %{customdata[3]}<extra></extra>"
+                "Clasificación WBS: %{customdata[2]}<br>"
+                "Criterio resumen: %{customdata[3]}<br>"
+                "Criterio cálculo: %{customdata[4]}<extra></extra>"
             ),
-        )
+        ))
         fig_blocks.update_layout(
             height=max(360, min(620, 110 + 38 * len(block_df))),
             margin=dict(l=10, r=74, t=18, b=42),
-            legend=dict(orientation="h", y=1.12, x=0, title=None),
+            showlegend=False,
             xaxis=dict(title="CLP", gridcolor=palette["grid"]),
             yaxis=dict(title=None),
             paper_bgcolor="rgba(0,0,0,0)",
@@ -12730,7 +12736,7 @@ def render_telecom_capex_supply_installation_tab() -> None:
         else:
             st.info("No hay partidas de suministro positivas en 03_CAPEX_WBS_USD_CLP para el modelo seleccionado.")
     with right:
-        st.markdown('<p class="capex-panel-title">Construcción del CAPEX instalado</p><p class="capex-panel-sub">Cascada WBS desde suministro EXW hasta CAPEX instalado total de la selección comercial.</p>', unsafe_allow_html=True)
+        st.markdown('<p class="capex-panel-title">Construcción del CAPEX instalado</p><p class="capex-panel-sub">Cascada por subtotales WBS hasta CAPEX instalado total. El color no codifica suministro/montaje para evitar confundirlo con el subtotal del gráfico superior.</p>', unsafe_allow_html=True)
         waterfall_items = subtotal_df.copy()
         if not waterfall_items.empty:
             waterfall_items["Etiqueta"] = waterfall_items["Partida"].map(lambda value: short_label(value, 24))
@@ -12738,23 +12744,20 @@ def render_telecom_capex_supply_installation_tab() -> None:
                 x=waterfall_items["Etiqueta"].tolist() + ["Total instalado"],
                 y=waterfall_items["Monto CLP"].tolist() + [installed_total_clp],
                 measure=["relative"] * len(waterfall_items) + ["total"],
-                name="CAPEX suministro / montaje",
+                name="Subtotales WBS",
                 showlegend=False,
                 connector={"line": {"color": "rgba(41,50,65,.35)"}},
-                increasing={"marker": {"color": palette["orange"]}},
+                increasing={"marker": {"color": "#6B7A90"}},
                 totals={"marker": {"color": palette["ink"]}},
                 text=[format_clp(v) for v in waterfall_items["Monto CLP"].tolist()] + [format_clp(installed_total_clp)],
                 textposition="outside",
                 customdata=np.stack([waterfall_items["Área CAPEX"]], axis=-1).tolist() + [["Total instalado"]],
-                hovertemplate="<b>%{x}</b><br>Área: %{customdata[0]}<br>$%{y:,.0f} CLP<extra></extra>",
+                hovertemplate="<b>%{x}</b><br>Clasificación contable: %{customdata[0]}<br>$%{y:,.0f} CLP<extra></extra>",
             ))
-            fig_waterfall.add_trace(go.Scatter(x=[None], y=[None], mode="markers", name="CAPEX suministro", marker=dict(color=palette["blue"], size=10)))
-            fig_waterfall.add_trace(go.Scatter(x=[None], y=[None], mode="markers", name="CAPEX montaje", marker=dict(color=palette["orange"], size=10)))
             fig_waterfall.update_layout(
                 height=390,
                 margin=dict(l=10, r=20, t=20, b=82),
-                showlegend=True,
-                legend=dict(orientation="h", y=1.14, x=0, title=None),
+                showlegend=False,
                 xaxis=dict(title=None, tickangle=-35),
                 yaxis=dict(title="CLP", gridcolor=palette["grid"]),
                 paper_bgcolor="rgba(0,0,0,0)",
