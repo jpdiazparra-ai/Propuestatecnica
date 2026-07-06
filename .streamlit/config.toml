@@ -1,0 +1,12 @@
+[theme]
+base = "light"
+primaryColor = "#3d5a80"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f8fafc"
+textColor = "#293241"
+
+[client]
+toolbarMode = "minimal"
+
+[server]
+headless = true
