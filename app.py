@@ -12631,7 +12631,7 @@ def render_telecom_capex_supply_installation_tab() -> None:
             {
                 "Área CAPEX": "CAPEX suministro",
                 "Monto CLP": float(selected_row.get("CAPEX suministro CLP", 0.0) or 0.0) * recommended_units,
-                "Alcance": f"Paquete proveedor EXW para {recommended_units} unidad(es): turbina, torre/mástil y eléctricos principales.",
+                "Alcance": f"Paquete proveedor EXW para {recommended_units} unidad(es): turbina y eléctricos principales.",
             },
             {
                 "Área CAPEX": "CAPEX montaje",
@@ -12721,13 +12721,10 @@ def render_telecom_capex_supply_installation_tab() -> None:
                 "Criterio cálculo: %{customdata[4]}<extra></extra>"
             ),
         ))
-        fig_blocks.add_trace(go.Scatter(x=[None], y=[None], mode="markers", name="CAPEX suministro", marker=dict(color=palette["blue"], size=10)))
-        fig_blocks.add_trace(go.Scatter(x=[None], y=[None], mode="markers", name="CAPEX montaje", marker=dict(color=palette["orange"], size=10)))
         fig_blocks.update_layout(
             height=max(360, min(620, 110 + 38 * len(block_df))),
             margin=dict(l=10, r=74, t=18, b=42),
-            showlegend=True,
-            legend=dict(orientation="h", y=1.12, x=0, title=None),
+            showlegend=False,
             xaxis=dict(title="CLP", gridcolor=palette["grid"]),
             yaxis=dict(title=None),
             paper_bgcolor="rgba(0,0,0,0)",
@@ -12793,13 +12790,10 @@ def render_telecom_capex_supply_installation_tab() -> None:
                 customdata=np.stack([waterfall_items["Área CAPEX"]], axis=-1).tolist() + [["Total instalado"]],
                 hovertemplate="<b>%{x}</b><br>Clasificación contable: %{customdata[0]}<br>$%{y:,.0f} CLP<extra></extra>",
             ))
-            fig_waterfall.add_trace(go.Scatter(x=[None], y=[None], mode="markers", name="CAPEX suministro", marker=dict(color=palette["blue"], size=10)))
-            fig_waterfall.add_trace(go.Scatter(x=[None], y=[None], mode="markers", name="CAPEX montaje", marker=dict(color=palette["orange"], size=10)))
             fig_waterfall.update_layout(
                 height=390,
                 margin=dict(l=10, r=20, t=20, b=82),
-                showlegend=True,
-                legend=dict(orientation="h", y=1.14, x=0, title=None),
+                showlegend=False,
                 xaxis=dict(title=None, tickangle=-35),
                 yaxis=dict(title="CLP", gridcolor=palette["grid"]),
                 paper_bgcolor="rgba(0,0,0,0)",
