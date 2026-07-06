@@ -17885,7 +17885,6 @@ def render_telecom_tower_eval_analysis():
         "04 Recomendación Comercial",
         "05 CAPEX Instalado",
         "06 Ejecución de proyecto",
-        "07 Resumen Ejecutivo",
     ]
     telecom_market_tab_aliases = {
         "01 Sitio y Demanda": "01 Perfil del Sitio",
@@ -17895,59 +17894,27 @@ def render_telecom_tower_eval_analysis():
         "CAPEX": "05 CAPEX Instalado",
         "Ejecución": "06 Ejecución de proyecto",
         "06 Cronograma": "06 Ejecución de proyecto",
-        "Resumen Ejecutivo": "07 Resumen Ejecutivo",
-        "07 Resumen": "07 Resumen Ejecutivo",
+        "Resumen Ejecutivo": "06 Ejecución de proyecto",
+        "07 Resumen": "06 Ejecución de proyecto",
     }
     for nav_key in ("telecom_market_tab_selector", "telecom_market_tab_selector__sticky"):
         current_tab_value = st.session_state.get(nav_key)
         if current_tab_value in telecom_market_tab_aliases:
             st.session_state[nav_key] = telecom_market_tab_aliases[current_tab_value]
+        elif current_tab_value and current_tab_value not in telecom_market_tabs:
+            st.session_state[nav_key] = telecom_market_tabs[0]
     if st.session_state.pop("restore_telecom_market_tab_after_refresh", False):
         sticky_tab = st.session_state.get("telecom_market_tab_selector__sticky")
         if sticky_tab in telecom_market_tab_aliases:
             sticky_tab = telecom_market_tab_aliases[sticky_tab]
         if sticky_tab in telecom_market_tabs:
             st.session_state["telecom_market_tab_selector"] = sticky_tab
-    tab_col, pdf_exec_col, pdf_annex_col = st.columns([0.64, 0.18, 0.18], vertical_alignment="bottom")
-    with tab_col:
-        selected_telecom_market_tab = render_single_select_pills_compat(
-            "Vista de análisis de mercado",
-            telecom_market_tabs,
-            default=telecom_market_tabs[0],
-            key="telecom_market_tab_selector",
-        )
-    with pdf_exec_col:
-        if REPORTLAB_AVAILABLE:
-            try:
-                executive_pdf_bytes = _build_telecom_pdf(executive=True, refresh_nonce=data_refresh_nonce)
-                st.download_button(
-                    "PDF ejecutivo",
-                    data=executive_pdf_bytes,
-                    file_name="Informe_ejecutivo_eolico_telecom.pdf",
-                    mime="application/pdf",
-                    use_container_width=True,
-                    key="download_telecom_exec_pdf",
-                )
-            except Exception as exc:
-                st.caption(f"PDF no disponible: {exc}")
-        else:
-            st.caption("PDF no disponible")
-    with pdf_annex_col:
-        if REPORTLAB_AVAILABLE:
-            try:
-                annex_pdf_bytes = _build_telecom_pdf(executive=False, refresh_nonce=data_refresh_nonce)
-                st.download_button(
-                    "Anexo técnico",
-                    data=annex_pdf_bytes,
-                    file_name="Anexo_tecnico_eolico_telecom.pdf",
-                    mime="application/pdf",
-                    use_container_width=True,
-                    key="download_telecom_annex_pdf",
-                )
-            except Exception as exc:
-                st.caption(f"Anexo no disponible: {exc}")
-        else:
-            st.caption("Anexo no disponible")
+    selected_telecom_market_tab = render_single_select_pills_compat(
+        "Vista de análisis de mercado",
+        telecom_market_tabs,
+        default=telecom_market_tabs[0],
+        key="telecom_market_tab_selector",
+    )
 
     def _analysis_context_state() -> dict:
         ctx = st.session_state.get("telecom_00_analysis_context", {}) or {}
@@ -18687,10 +18654,6 @@ def render_telecom_tower_eval_analysis():
 
     if selected_telecom_market_tab == "06 Ejecución de proyecto":
         render_telecom_project_execution_tab()
-        return
-
-    if selected_telecom_market_tab == "07 Resumen Ejecutivo":
-        render_telecom_executive_summary_tab()
         return
 
     alternatives["Alternativa"] = pd.Categorical(alternatives["Alternativa"], categories=turbine_order, ordered=True)
