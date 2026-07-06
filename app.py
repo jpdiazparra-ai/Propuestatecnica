@@ -16555,6 +16555,44 @@ def render_telecom_tower_eval_analysis():
             raw_df = pd.DataFrame()
             source_label = ""
             sep_arg = None if delimiter_mode == "Automático" else ("\t" if delimiter_mode == "\\t" else delimiter_mode)
+            selected_pop_for_wind = str(st.session_state.get("telecom_client_selected_pop", "") or "").strip()
+            pop_wind_files = {
+                "ZP013": Path("data/wind/ZP013.csv"),
+                "MG888": Path("data/wind/MG888.csv"),
+                "FS608": Path("data/wind/FS608.csv"),
+            }
+            selected_pop_key = ""
+            selected_pop_norm = normalize_key(selected_pop_for_wind)
+            for pop_code in pop_wind_files:
+                if normalize_key(pop_code) in selected_pop_norm:
+                    selected_pop_key = pop_code
+                    break
+            auto_wind_path = pop_wind_files.get(selected_pop_key)
+            auto_wind_signature = f"{selected_pop_key}:{auto_wind_path}" if auto_wind_path else ""
+            previous_auto_signature = str(st.session_state.get("telecom_09_auto_wind_signature", "") or "")
+            if auto_wind_signature and auto_wind_signature != previous_auto_signature:
+                for key in [
+                    "telecom_09_wind_saved_bytes",
+                    "telecom_09_wind_saved_text",
+                    "telecom_09_wind_saved_source",
+                    "telecom_09_wind_saved_rows",
+                    "telecom_09_viento_outputs",
+                    "telecom_09_viento_output_signature",
+                ]:
+                    st.session_state.pop(key, None)
+                st.session_state["telecom_09_auto_wind_signature"] = auto_wind_signature
+            if auto_wind_path and auto_wind_path.exists():
+                st.markdown(
+                    f"""
+                    <div class="telecom-note">
+                      <b>Recurso eólico automático:</b> POP activo <b>{html.escape(selected_pop_key)}</b>.
+                      Se cargará <b>{html.escape(auto_wind_path.name)}</b> desde la carpeta <b>data/wind</b>.
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            elif selected_pop_for_wind:
+                st.info(f"No hay CSV de viento asociado al POP seleccionado: {selected_pop_for_wind}. Puedes cargar o pegar un CSV manualmente.")
             try:
                 if uploaded_file is not None:
                     uploaded_bytes = uploaded_file.getvalue()
@@ -16569,6 +16607,12 @@ def render_telecom_tower_eval_analysis():
                     st.session_state["telecom_09_wind_saved_source"] = "CSV pegado"
                     raw_df = pd.read_csv(StringIO(pasted_csv), sep=sep_arg, engine="python")
                     source_label = "CSV pegado"
+                elif auto_wind_path and auto_wind_path.exists():
+                    raw_df = pd.read_csv(auto_wind_path, sep=sep_arg, engine="python")
+                    source_label = f"{selected_pop_key} · {auto_wind_path.name}"
+                    st.session_state["telecom_09_wind_saved_bytes"] = auto_wind_path.read_bytes()
+                    st.session_state["telecom_09_wind_saved_text"] = ""
+                    st.session_state["telecom_09_wind_saved_source"] = source_label
                 elif st.session_state.get("telecom_09_wind_saved_bytes"):
                     saved_bytes = st.session_state["telecom_09_wind_saved_bytes"]
                     raw_df = pd.read_csv(BytesIO(saved_bytes), sep=sep_arg, engine="python")
@@ -17895,6 +17939,7 @@ def render_telecom_tower_eval_analysis():
                     key="site_demand_pop_selector",
                     help="Lista cargada desde el CSV maestro de sitios.",
                 )
+                st.session_state["telecom_client_selected_pop"] = selected_pop_tab
                 site_matches_tab = proposal_site_options_tab[
                     proposal_site_options_tab[pop_col_tab].astype(str).str.strip() == selected_pop_tab
                 ]
