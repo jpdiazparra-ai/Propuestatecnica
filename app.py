@@ -401,6 +401,7 @@ GANTT_COLUMN_ALIASES = {
 }
 REMOTE_FETCH_TTL_SECONDS = 3600
 CAPEX_REMOTE_FETCH_TTL_SECONDS = 120
+SITE_MASTER_FETCH_TTL_SECONDS = 120
 REMOTE_CONNECT_TIMEOUT_SECONDS = 5
 REMOTE_READ_TIMEOUT_SECONDS = 45
 REMOTE_FETCH_RETRIES = 2
@@ -2213,7 +2214,7 @@ def _build_transposed_site_table(raw_df: pd.DataFrame) -> pd.DataFrame:
     return table[table["PoP"].astype(str).str.strip() != ""].reset_index(drop=True)
 
 
-@st.cache_data(show_spinner=False, ttl=REMOTE_FETCH_TTL_SECONDS, persist="disk")
+@st.cache_data(show_spinner=False, ttl=SITE_MASTER_FETCH_TTL_SECONDS, persist="disk")
 def load_propuesta_site_options(refresh_nonce: int = 0) -> pd.DataFrame:
     raw_df = read_remote_csv(
         TELECOM_SITE_MASTER_CSV_URL_DEFAULT,
@@ -12481,8 +12482,12 @@ def render_telecom_capex_supply_installation_tab() -> None:
     proposal_generation = parse_float_local(recommended_state.get("Generación mensual kWh", np.nan), np.nan)
     installed_unit_clp = float(selected_row.get("CAPEX instalado CLP", 0.0) or 0.0)
     installed_unit_usd = float(selected_row.get("CAPEX instalado total USD", 0.0) or 0.0)
+    supply_unit_clp = float(selected_row.get("CAPEX suministro CLP", 0.0) or 0.0)
+    mounting_unit_clp = float(selected_row.get("CAPEX montaje sin suministro CLP", 0.0) or 0.0)
     exchange_rate = installed_unit_clp / installed_unit_usd if installed_unit_clp > 0 and installed_unit_usd > 0 else np.nan
     installed_total_clp = installed_unit_clp * recommended_units
+    supply_total_clp = supply_unit_clp * recommended_units
+    mounting_total_clp = mounting_unit_clp * recommended_units
     capex_gap = proposal_capex - installed_total_clp if np.isfinite(proposal_capex) else np.nan
     capex_gap_pct = capex_gap / installed_total_clp * 100.0 if np.isfinite(capex_gap) and installed_total_clp > 0 else np.nan
     selected_wbs = wbs_df[wbs_df["Modelo"].astype(str).eq(recommended_model)].copy() if not wbs_df.empty else pd.DataFrame()
@@ -12492,6 +12497,8 @@ def render_telecom_capex_supply_installation_tab() -> None:
     selected_wbs["Monto CLP"] = pd.to_numeric(selected_wbs["Monto CLP"], errors="coerce").fillna(
         pd.to_numeric(selected_wbs["Monto USD"], errors="coerce")
     )
+    if recommended_units > 1 and not selected_wbs.empty:
+        selected_wbs["Monto CLP"] = selected_wbs["Monto CLP"] * recommended_units
     selected_wbs["Monto USD"] = selected_wbs["Monto CLP"] / exchange_rate if np.isfinite(exchange_rate) and exchange_rate > 0 else np.nan
 
     def fmt_usd(value: object) -> str:
@@ -12556,9 +12563,9 @@ def render_telecom_capex_supply_installation_tab() -> None:
     kpis_html = "".join(
         [
             f'<div class="capex-kpi" style="--accent:{palette["orange"]};"><span>Modelo recomendado</span><b>{html.escape(recommended_model)}</b><small>{recommended_units} unidad(es) desde pestaña 04</small></div>',
-            f'<div class="capex-kpi" style="--accent:{palette["blue"]};"><span>CAPEX instalado unitario</span><b>{fmt_clp_mm(installed_unit_clp)}</b><small>{format_clp(installed_unit_clp)} total instalado</small></div>',
-            f'<div class="capex-kpi" style="--accent:{palette["sky"]};"><span>Montaje local</span><b>{fmt_pct(selected_row.get("Montaje sobre total %"))}</b><small>{fmt_x(selected_row.get("Montaje / suministro x"))} sobre suministro</small></div>',
-            f'<div class="capex-kpi" style="--accent:{palette["ink"]};"><span>Paquete proveedor EXW</span><b>{format_clp(selected_row.get("CAPEX suministro CLP"))}</b><small>{fmt_pct(selected_row.get("Suministro sobre total %"))} del CAPEX instalado</small></div>',
+            f'<div class="capex-kpi" style="--accent:{palette["blue"]};"><span>CAPEX instalado total</span><b>{fmt_clp_mm(installed_total_clp)}</b><small>{recommended_units} x {format_clp(installed_unit_clp)} unitario</small></div>',
+            f'<div class="capex-kpi" style="--accent:{palette["sky"]};"><span>Montaje local total</span><b>{fmt_clp_mm(mounting_total_clp)}</b><small>{fmt_pct(selected_row.get("Montaje sobre total %"))} del CAPEX instalado</small></div>',
+            f'<div class="capex-kpi" style="--accent:{palette["ink"]};"><span>Paquete proveedor EXW total</span><b>{fmt_clp_mm(supply_total_clp)}</b><small>{recommended_units} x {format_clp(supply_unit_clp)} unitario</small></div>',
         ]
     )
     st.markdown(
@@ -12625,12 +12632,8 @@ def render_telecom_capex_supply_installation_tab() -> None:
 
     if not subtotal_df.empty:
         subtotal_df["Área CAPEX"] = subtotal_df.apply(capex_area_from_row, axis=1)
-        subtotal_df["Monto CLP"] = subtotal_df["Monto CLP"] * recommended_units
-        subtotal_df["Monto USD"] = subtotal_df["Monto USD"] * recommended_units
     if not detail_df.empty:
         detail_df["Área CAPEX"] = detail_df.apply(capex_area_from_row, axis=1)
-        detail_df["Monto CLP"] = detail_df["Monto CLP"] * recommended_units
-        detail_df["Monto USD"] = detail_df["Monto USD"] * recommended_units
 
     macro_area_df = pd.DataFrame(
         [
@@ -12963,7 +12966,7 @@ def render_telecom_capex_supply_installation_tab() -> None:
         st.markdown('<p class="capex-panel-title">Distribución ejecutiva por bloque WBS</p><p class="capex-panel-sub">Participación de cada bloque sobre el CAPEX instalado de la turbina seleccionada.</p>', unsafe_allow_html=True)
         donut_df = subtotal_df.copy()
         donut_df = donut_df.sort_values("Monto CLP", ascending=False).reset_index(drop=True)
-        donut_df["% Total"] = np.where(installed_unit_clp > 0, donut_df["Monto CLP"] / installed_unit_clp * 100.0, np.nan)
+        donut_df["% Total"] = np.where(installed_total_clp > 0, donut_df["Monto CLP"] / installed_total_clp * 100.0, np.nan)
         donut_df["Bloque WBS"] = donut_df["Partida"].map(lambda value: short_label(value, 34))
         donut_df["Monto etiqueta"] = donut_df["Monto CLP"].map(format_clp)
         donut_palette = [
@@ -13988,6 +13991,9 @@ def load_telecom_site_inputs_model(url: str, refresh_nonce: int = 0) -> dict:
 
         site_label = record_value(["PoP", "Sitio", "Site"], "Sitio seleccionado")
         energy_cost = record_value(["Costo $/kWh", "Costo energia equivalente", "Costo kWh"], "$429")
+        grid_cost_raw = record_value(["Costo red (CLP/kWh)", "Costo red", "Red CLP/kWh"], "")
+        diesel_cost_raw = record_value(["Costo electrógeno (CLP/kWh)", "Costo electrogeno (CLP/kWh)", "Costo electrógeno base", "Costo electrogeno"], "")
+        bess_cost_raw = record_value(["Costo FV/BESS ref. (CLP/kWh)", "Costo FV/BESS ref", "Costo FV/BESS", "Costo batería referencia", "Costo bateria"], "")
         energy_cost_numeric = parse_money_clp_robusto(energy_cost)
         if energy_cost_numeric is None:
             energy_cost_numeric = parse_float_local(energy_cost, 0.0)
@@ -13999,9 +14005,15 @@ def load_telecom_site_inputs_model(url: str, refresh_nonce: int = 0) -> dict:
         mix_diesel_value = parse_percent_local(mix_diesel_raw, parse_float_local(mix_diesel_raw, 0.0) / 100.0) * 100.0
         mix_solar_value = parse_percent_local(mix_solar_raw, parse_float_local(mix_solar_raw, 0.0) / 100.0) * 100.0
         mix_battery_value = parse_percent_local(mix_battery_raw, parse_float_local(mix_battery_raw, 0.0) / 100.0) * 100.0
-        grid_cost_value = energy_cost_numeric if mix_grid_value > 0 else 0.0
-        diesel_cost_value = energy_cost_numeric if mix_diesel_value > 0 else 0.0
-        bess_cost_value = energy_cost_numeric if (mix_solar_value + mix_battery_value) > 0 else 0.0
+        grid_cost_value = parse_money_clp_robusto(grid_cost_raw) if grid_cost_raw else None
+        diesel_cost_value = parse_money_clp_robusto(diesel_cost_raw) if diesel_cost_raw else None
+        bess_cost_value = parse_money_clp_robusto(bess_cost_raw) if bess_cost_raw else None
+        if grid_cost_value is None:
+            grid_cost_value = energy_cost_numeric if mix_grid_value > 0 else 0.0
+        if diesel_cost_value is None:
+            diesel_cost_value = energy_cost_numeric if mix_diesel_value > 0 else 0.0
+        if bess_cost_value is None:
+            bess_cost_value = energy_cost_numeric if (mix_solar_value + mix_battery_value) > 0 else 0.0
         rows = [
             ("Identificación y ubicación", "ID Sitio", site_label, "", "Base maestra sitios", "Trazabilidad", "Automático", "Sincronizado desde CSV maestro.", "Alta"),
             ("Identificación y ubicación", "Nombre sitio", site_label, "", "Base maestra sitios", "Ficha técnica", "Automático", "Sincronizado desde CSV maestro.", "Alta"),
@@ -19772,7 +19784,7 @@ def render_telecom_scenario_simulator(
             site_matches = proposal_site_options[proposal_site_options[pop_col].astype(str).str.strip() == selected_pop]
             if not site_matches.empty:
                 selected_site_row = site_matches.iloc[0]
-            cost_defaults_version = 20260706
+            cost_defaults_version = 2026070602
             if (
                 st.session_state.get("sim6_pop_selector_prev") != selected_pop
                 or st.session_state.get("sim6_energy_cost_defaults_version") != cost_defaults_version
@@ -19816,6 +19828,11 @@ def render_telecom_scenario_simulator(
         if mix_value <= 0:
             return 0.0
         return selected_site_numeric(["Costo $/kWh", "Costo energia equivalente", "Costo kWh"], default)
+
+    def selected_named_energy_cost(cost_candidates: list[str], mix_candidates: list[str], default: float = 0.0) -> float:
+        if selected_site_value(cost_candidates, ""):
+            return selected_site_numeric(cost_candidates, default)
+        return selected_energy_cost_by_mix(mix_candidates, default)
 
     def selected_bess_mix_value(default: float = 0.0) -> float:
         explicit_mix = selected_site_value(["Mix Batería/Solar", "Mix Bateria", "BESS %", "FV/BESS %"], "")
@@ -19903,9 +19920,21 @@ def render_telecom_scenario_simulator(
         default_monthly_consumption = selected_site_numeric(["Consumo mensual modelo", "Consumo mensual", "Consumo kWh/mes", "kWh mes", "kWh/mes"], default_monthly_consumption)
         default_target_coverage = selected_site_numeric(["Cobertura objetivo", "Cobertura", "Objetivo cobertura"], default_target_coverage)
         default_project_life = int(max(5, min(30, round(selected_site_numeric(["Vida útil", "Vida util", "Años análisis"], default_project_life)))))
-        default_grid_cost = selected_energy_cost_by_mix(["Mix Red", "Red %", "% red"], default_grid_cost)
-        default_diesel_cost = selected_energy_cost_by_mix(["Mix Electrógeno", "Mix Electrogeno", "Diésel %", "Diesel %"], default_diesel_cost)
-        default_bess_cost = selected_site_numeric(["Costo $/kWh", "Costo energia equivalente", "Costo kWh"], default_bess_cost) if selected_bess_mix_value(0.0) > 0 else 0.0
+        default_grid_cost = selected_named_energy_cost(
+            ["Costo red (CLP/kWh)", "Costo red", "Red CLP/kWh", "Tarifa red modelo", "Tarifa red"],
+            ["Mix Red", "Red %", "% red"],
+            default_grid_cost,
+        )
+        default_diesel_cost = selected_named_energy_cost(
+            ["Costo electrógeno (CLP/kWh)", "Costo electrogeno (CLP/kWh)", "Costo electrógeno base", "Costo electrogeno", "Diésel CLP/kWh", "Diesel CLP/kWh"],
+            ["Mix Electrógeno", "Mix Electrogeno", "Diésel %", "Diesel %"],
+            default_diesel_cost,
+        )
+        default_bess_cost = selected_named_energy_cost(
+            ["Costo FV/BESS ref. (CLP/kWh)", "Costo FV/BESS ref", "Costo FV/BESS", "Costo batería referencia", "Costo bateria", "BESS CLP/kWh"],
+            ["Mix Batería/Solar", "Mix Bateria", "BESS %", "FV %", "Solar %", "Batería %", "Bateria %"],
+            default_bess_cost,
+        )
         default_mix_grid = selected_site_numeric(["Mix Red", "Red %", "% red"], default_mix_grid)
         default_mix_diesel = selected_site_numeric(["Mix Electrógeno", "Mix Electrogeno", "Diésel %", "Diesel %"], default_mix_diesel)
         default_mix_bess = selected_bess_mix_value(default_mix_bess)
