@@ -13959,6 +13959,20 @@ def load_telecom_site_inputs_model(url: str, refresh_nonce: int = 0) -> dict:
 
         site_label = record_value(["PoP", "Sitio", "Site"], "Sitio seleccionado")
         energy_cost = record_value(["Costo $/kWh", "Costo energia equivalente", "Costo kWh"], "$429")
+        energy_cost_numeric = parse_money_clp_robusto(energy_cost)
+        if energy_cost_numeric is None:
+            energy_cost_numeric = parse_float_local(energy_cost, 0.0)
+        mix_grid_raw = record_value(["Red %", "Mix Red"], "0%")
+        mix_diesel_raw = record_value(["Diésel %", "Diesel %", "Mix Electrógeno", "Mix Electrogeno"], "100%")
+        mix_solar_raw = record_value(["Solar %", "Mix Solar"], "0%")
+        mix_battery_raw = record_value(["Batería %", "Bateria %", "Mix Batería", "Mix Bateria"], "0%")
+        mix_grid_value = parse_percent_local(mix_grid_raw, parse_float_local(mix_grid_raw, 0.0) / 100.0) * 100.0
+        mix_diesel_value = parse_percent_local(mix_diesel_raw, parse_float_local(mix_diesel_raw, 0.0) / 100.0) * 100.0
+        mix_solar_value = parse_percent_local(mix_solar_raw, parse_float_local(mix_solar_raw, 0.0) / 100.0) * 100.0
+        mix_battery_value = parse_percent_local(mix_battery_raw, parse_float_local(mix_battery_raw, 0.0) / 100.0) * 100.0
+        grid_cost_value = energy_cost_numeric if mix_grid_value > 0 else 0.0
+        diesel_cost_value = energy_cost_numeric if mix_diesel_value > 0 else 0.0
+        bess_cost_value = energy_cost_numeric if (mix_solar_value + mix_battery_value) > 0 else 0.0
         rows = [
             ("Identificación y ubicación", "ID Sitio", site_label, "", "Base maestra sitios", "Trazabilidad", "Automático", "Sincronizado desde CSV maestro.", "Alta"),
             ("Identificación y ubicación", "Nombre sitio", site_label, "", "Base maestra sitios", "Ficha técnica", "Automático", "Sincronizado desde CSV maestro.", "Alta"),
@@ -13973,12 +13987,13 @@ def load_telecom_site_inputs_model(url: str, refresh_nonce: int = 0) -> dict:
             ("Consumo, suministro y costos energéticos", "Consumo anual", record_value(["Energía kWh/año", "Energia kWh/ano", "Demanda anual"], "38.851"), "kWh/año", "Base maestra sitios", "Modelo", "Automático", "", "Alta"),
             ("Consumo, suministro y costos energéticos", "Potencia promedio", record_value(["Potencia prom. kW", "Potencia promedio"], ""), "kW", "Base maestra sitios", "Carga equivalente", "Automático", "", "Media"),
             ("Consumo, suministro y costos energéticos", "OPEX combustible", record_value(["OPEX $/año", "OPEX combustible", "OPEX anual"], ""), "$/año", "Base maestra sitios", "Costo actual", "Automático", "", "Alta"),
-            ("Consumo, suministro y costos energéticos", "Tarifa red modelo", energy_cost, "$/kWh", "Base maestra sitios", "Ahorro red", "Automático", "", "Alta"),
-            ("Consumo, suministro y costos energéticos", "Costo electrógeno base", energy_cost, "$/kWh", "Base maestra sitios", "Ahorro diésel", "Automático", "", "Alta"),
+            ("Consumo, suministro y costos energéticos", "Tarifa red modelo", format_clp(grid_cost_value), "$/kWh", "Base maestra sitios", "Ahorro red", "Automático", "", "Alta"),
+            ("Consumo, suministro y costos energéticos", "Costo electrógeno base", format_clp(diesel_cost_value), "$/kWh", "Base maestra sitios", "Ahorro diésel", "Automático", "", "Alta"),
+            ("Consumo, suministro y costos energéticos", "Costo FV/BESS referencia", format_clp(bess_cost_value), "$/kWh", "Base maestra sitios", "Comparación", "Automático", "", "Media"),
             ("Consumo, suministro y costos energéticos", "Costo ponderado actual", energy_cost, "$/kWh", "Base maestra sitios", "Ahorro híbrido", "Automático", "", "Alta"),
-            ("Consumo, suministro y costos energéticos", "Mix Red", record_value(["Red %", "Mix Red"], "0%"), "% energía", "Base maestra sitios", "Costo ponderado", "Automático", "", "Alta"),
-            ("Consumo, suministro y costos energéticos", "Mix Electrógeno", record_value(["Diésel %", "Diesel %", "Mix Electrógeno", "Mix Electrogeno"], "100%"), "% energía", "Base maestra sitios", "Costo ponderado", "Automático", "", "Alta"),
-            ("Consumo, suministro y costos energéticos", "Mix Batería/Solar", record_value(["Solar %", "Batería %", "Bateria %", "Mix Batería/Solar"], "0%"), "% energía", "Base maestra sitios", "Costo ponderado", "Automático", "", "Media"),
+            ("Consumo, suministro y costos energéticos", "Mix Red", mix_grid_raw, "% energía", "Base maestra sitios", "Costo ponderado", "Automático", "", "Alta"),
+            ("Consumo, suministro y costos energéticos", "Mix Electrógeno", mix_diesel_raw, "% energía", "Base maestra sitios", "Costo ponderado", "Automático", "", "Alta"),
+            ("Consumo, suministro y costos energéticos", "Mix Batería/Solar", f"{mix_solar_value + mix_battery_value:.1f}%", "% energía", "Base maestra sitios", "Costo ponderado", "Automático", "", "Media"),
             ("Consumo, suministro y costos energéticos", "CO₂ informado", record_value(["CO₂ t/año", "CO2 t/año", "CO2"], ""), "t/año", "Base maestra sitios", "Impacto ambiental", "Automático", "", "Media"),
             ("Supuestos de proyecto eólico", "Cobertura objetivo", "100,0%", "% consumo", "Cliente", "Dimensionamiento", "Editable", "Escenario de sensibilidad", "Alta"),
             ("Supuestos de proyecto eólico", "Vida útil", "20", "años", "Proveedor", "LCOE/VAN", "Por validar", "", "Alta"),
@@ -19728,7 +19743,11 @@ def render_telecom_scenario_simulator(
             site_matches = proposal_site_options[proposal_site_options[pop_col].astype(str).str.strip() == selected_pop]
             if not site_matches.empty:
                 selected_site_row = site_matches.iloc[0]
-            if st.session_state.get("sim6_pop_selector_prev") != selected_pop:
+            cost_defaults_version = 20260706
+            if (
+                st.session_state.get("sim6_pop_selector_prev") != selected_pop
+                or st.session_state.get("sim6_energy_cost_defaults_version") != cost_defaults_version
+            ):
                 for widget_key in [
                     "sim6_monthly_consumption", "sim6_target_coverage", "sim6_safety_margin", "sim6_project_life",
                     "sim6_plant_factor", "sim6_plant_factor_locked", "sim6_availability", "sim6_electrical_losses", "sim6_additional_losses",
@@ -19738,6 +19757,7 @@ def render_telecom_scenario_simulator(
                 ]:
                     st.session_state.pop(widget_key, None)
                 st.session_state["sim6_pop_selector_prev"] = selected_pop
+                st.session_state["sim6_energy_cost_defaults_version"] = cost_defaults_version
 
     def selected_site_value(candidates: list[str], default: str = "") -> str:
         if selected_site_row.empty:
@@ -19761,6 +19781,20 @@ def render_telecom_scenario_simulator(
         if money is not None and money != 0:
             return float(money)
         return parse_float_local(value, default)
+
+    def selected_energy_cost_by_mix(mix_candidates: list[str], default: float = 0.0) -> float:
+        mix_value = selected_site_numeric(mix_candidates, 0.0)
+        if mix_value <= 0:
+            return 0.0
+        return selected_site_numeric(["Costo $/kWh", "Costo energia equivalente", "Costo kWh"], default)
+
+    def selected_bess_mix_value(default: float = 0.0) -> float:
+        explicit_mix = selected_site_value(["Mix Batería/Solar", "Mix Bateria", "BESS %", "FV/BESS %"], "")
+        if explicit_mix:
+            return selected_site_numeric(["Mix Batería/Solar", "Mix Bateria", "BESS %", "FV/BESS %"], default)
+        solar_mix = selected_site_numeric(["Solar %", "FV %"], 0.0)
+        battery_mix = selected_site_numeric(["Batería %", "Bateria %"], 0.0)
+        return solar_mix + battery_mix
 
     wind_by_alt = {}
     if not wind_defaults.empty and "Alternativa" in wind_defaults.columns:
@@ -19840,12 +19874,12 @@ def render_telecom_scenario_simulator(
         default_monthly_consumption = selected_site_numeric(["Consumo mensual modelo", "Consumo mensual", "Consumo kWh/mes", "kWh mes", "kWh/mes"], default_monthly_consumption)
         default_target_coverage = selected_site_numeric(["Cobertura objetivo", "Cobertura", "Objetivo cobertura"], default_target_coverage)
         default_project_life = int(max(5, min(30, round(selected_site_numeric(["Vida útil", "Vida util", "Años análisis"], default_project_life)))))
-        default_grid_cost = selected_site_numeric(["Tarifa red modelo", "Costo red", "Red CLP/kWh", "Tarifa red", "Costo $/kWh"], default_grid_cost)
-        default_diesel_cost = selected_site_numeric(["Costo electrógeno base", "Costo electrogeno", "Diésel CLP/kWh", "Diesel CLP/kWh", "Costo $/kWh"], default_diesel_cost)
-        default_bess_cost = selected_site_numeric(["Costo batería referencia", "Costo bateria", "BESS CLP/kWh", "FV/BESS", "Costo $/kWh"], default_bess_cost)
+        default_grid_cost = selected_energy_cost_by_mix(["Mix Red", "Red %", "% red"], default_grid_cost)
+        default_diesel_cost = selected_energy_cost_by_mix(["Mix Electrógeno", "Mix Electrogeno", "Diésel %", "Diesel %"], default_diesel_cost)
+        default_bess_cost = selected_site_numeric(["Costo $/kWh", "Costo energia equivalente", "Costo kWh"], default_bess_cost) if selected_bess_mix_value(0.0) > 0 else 0.0
         default_mix_grid = selected_site_numeric(["Mix Red", "Red %", "% red"], default_mix_grid)
         default_mix_diesel = selected_site_numeric(["Mix Electrógeno", "Mix Electrogeno", "Diésel %", "Diesel %"], default_mix_diesel)
-        default_mix_bess = selected_site_numeric(["Mix Batería/Solar", "Mix Bateria", "BESS %", "FV %", "Solar %", "Batería %", "Bateria %"], default_mix_bess)
+        default_mix_bess = selected_bess_mix_value(default_mix_bess)
         default_surplus_price = 0.0
         default_surplus_factor = selected_site_numeric(["Factor valorización excedente", "Factor excedente"], default_surplus_factor)
         default_om_pct = selected_site_numeric(["O&M anual", "OM anual", "Opex anual"], default_om_pct)
