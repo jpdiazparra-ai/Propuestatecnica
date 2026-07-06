@@ -12533,16 +12533,16 @@ def render_telecom_capex_supply_installation_tab() -> None:
         """
         <style>
         .capex-tab-wrap{max-width:1480px;margin:0 auto;padding-top:4px;color:#293241;}
-        .capex-hero{border:1px solid rgba(203,213,225,.75);border-radius:22px;background:#FFFFFF;box-shadow:0 10px 28px rgba(15,23,42,.06);padding:18px 20px;margin:8px 0 14px;}
+        .capex-hero{border:1px solid rgba(117,169,184,.28);border-radius:18px;background:linear-gradient(125deg,#3d5a80 0%,#98c1d9 58%,#293241 100%);box-shadow:0 18px 44px rgba(40,71,99,.10);padding:24px 26px;margin:8px 0 14px;color:#fff;}
         .capex-hero-grid{display:grid;grid-template-columns:minmax(320px,1.35fr) minmax(560px,1.65fr);gap:18px;align-items:stretch;}
-        .capex-k{font-size:11px;font-weight:950;letter-spacing:.14em;text-transform:uppercase;color:#3d5a80;margin:0 0 7px;}
-        .capex-t{font-size:30px;line-height:1.04;font-weight:950;color:#293241;margin:0;}
-        .capex-s{font-size:13px;line-height:1.42;color:#475569;font-weight:750;margin:8px 0 0;max-width:760px;}
+        .capex-k{font-size:10.5px;font-weight:950;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.78);margin:0 0 9px;}
+        .capex-t{font-size:clamp(24px,1.9vw,34px);line-height:1.04;font-weight:950;color:#fff;margin:0 0 9px;}
+        .capex-s{font-size:13px;line-height:1.45;color:rgba(255,255,255,.88);font-weight:780;margin:0;max-width:820px;}
         .capex-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;}
-        .capex-kpi{border:1px solid rgba(203,213,225,.75);border-left:5px solid var(--accent);border-radius:17px;background:#F8FAFC;padding:12px 13px;min-height:92px;}
-        .capex-kpi span{display:block;font-size:10px;font-weight:950;letter-spacing:.08em;text-transform:uppercase;color:#64748B;}
-        .capex-kpi b{display:block;font-size:22px;line-height:1.05;color:#293241;margin:7px 0 4px;font-weight:950;overflow-wrap:anywhere;}
-        .capex-kpi small{display:block;font-size:11px;line-height:1.25;color:#475569;font-weight:750;}
+        .capex-kpi{border:1px solid rgba(255,255,255,.26);border-left:5px solid var(--accent);border-radius:17px;background:rgba(255,255,255,.14);padding:12px 13px;min-height:92px;box-shadow:inset 0 1px 0 rgba(255,255,255,.14);}
+        .capex-kpi span{display:block;font-size:10px;font-weight:950;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.80);}
+        .capex-kpi b{display:block;font-size:22px;line-height:1.05;color:#fff;margin:7px 0 4px;font-weight:950;overflow-wrap:anywhere;}
+        .capex-kpi small{display:block;font-size:11px;line-height:1.25;color:rgba(255,255,255,.82);font-weight:750;}
         .capex-note{border:1px solid rgba(238,108,77,.32);border-left:6px solid #ee6c4d;border-radius:16px;background:#FFF8F5;padding:12px 14px;margin:10px 0 14px;color:#293241;font-size:12px;line-height:1.42;font-weight:800;}
         .capex-panel-title{margin:0 0 4px;font-size:17px;line-height:1.15;font-weight:950;color:#293241;}
         .capex-panel-sub{margin:0 0 10px;font-size:12px;line-height:1.35;color:#64748B;font-weight:750;}
@@ -12573,9 +12573,9 @@ def render_telecom_capex_supply_installation_tab() -> None:
         <div class="capex-hero">
           <div class="capex-hero-grid">
             <div>
-              <p class="capex-k">CAPEX · Suministro e instalación</p>
-              <h3 class="capex-t">Análisis CAPEX de {html.escape(recommended_model)}</h3>
-              <p class="capex-s">Vista monográfica de la turbina recomendada por la propuesta técnico-económica. Integra CAPEX suministro, montaje, OOCC, logística, gestión e imprevistos desde 03_CAPEX_WBS_USD_CLP.</p>
+              <p class="capex-k">Inversión del proyecto · CAPEX instalado</p>
+              <h3 class="capex-t">Presupuesto ejecutivo para {html.escape(recommended_model)}</h3>
+              <p class="capex-s">Presenta al cliente la inversión total de la solución eólica recomendada, separando suministro tecnológico, montaje local, obras civiles, logística, gestión e imprevistos para sustentar el alcance comercial.</p>
             </div>
             <div class="capex-kpi-grid">{kpis_html}</div>
           </div>
@@ -13628,16 +13628,16 @@ def render_telecom_project_execution_tab() -> None:
         """
         <style>
         .exec-wrap{max-width:1480px;margin:0 auto;padding-top:4px;color:#293241;}
-        .exec-hero{border:1px solid rgba(203,213,225,.78);border-radius:22px;background:#fff;box-shadow:0 10px 28px rgba(15,23,42,.06);padding:18px 20px;margin:8px 0 14px;}
+        .exec-hero{border:1px solid rgba(117,169,184,.28);border-radius:18px;background:linear-gradient(125deg,#3d5a80 0%,#98c1d9 58%,#293241 100%);box-shadow:0 18px 44px rgba(40,71,99,.10);padding:24px 26px;margin:8px 0 14px;color:#fff;}
         .exec-hero-grid{display:grid;grid-template-columns:minmax(310px,1.2fr) minmax(620px,1.8fr);gap:16px;align-items:stretch;}
-        .exec-k{font-size:11px;font-weight:950;letter-spacing:.14em;text-transform:uppercase;color:#3d5a80;margin:0 0 7px;}
-        .exec-t{font-size:30px;line-height:1.04;font-weight:950;color:#293241;margin:0;}
-        .exec-s{font-size:13px;line-height:1.42;color:#475569;font-weight:750;margin:8px 0 0;max-width:780px;}
+        .exec-k{font-size:10.5px;font-weight:950;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.78);margin:0 0 9px;}
+        .exec-t{font-size:clamp(24px,1.9vw,34px);line-height:1.04;font-weight:950;color:#fff;margin:0 0 9px;}
+        .exec-s{font-size:13px;line-height:1.45;color:rgba(255,255,255,.88);font-weight:780;margin:0;max-width:820px;}
         .exec-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;}
-        .exec-kpi{border:1px solid rgba(203,213,225,.78);border-left:5px solid var(--accent);border-radius:17px;background:#F8FAFC;padding:12px 13px;min-height:94px;}
-        .exec-kpi span{display:block;font-size:10px;font-weight:950;letter-spacing:.08em;text-transform:uppercase;color:#64748B;}
-        .exec-kpi b{display:block;font-size:22px;line-height:1.05;color:#293241;margin:7px 0 4px;font-weight:950;overflow-wrap:anywhere;}
-        .exec-kpi small{display:block;font-size:11px;line-height:1.25;color:#475569;font-weight:750;}
+        .exec-kpi{border:1px solid rgba(255,255,255,.26);border-left:5px solid var(--accent);border-radius:17px;background:rgba(255,255,255,.14);padding:12px 13px;min-height:94px;box-shadow:inset 0 1px 0 rgba(255,255,255,.14);}
+        .exec-kpi span{display:block;font-size:10px;font-weight:950;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.80);}
+        .exec-kpi b{display:block;font-size:22px;line-height:1.05;color:#fff;margin:7px 0 4px;font-weight:950;overflow-wrap:anywhere;}
+        .exec-kpi small{display:block;font-size:11px;line-height:1.25;color:rgba(255,255,255,.82);font-weight:750;}
         .exec-note{border:1px solid rgba(238,108,77,.32);border-left:6px solid #ee6c4d;border-radius:16px;background:#FFF8F5;padding:12px 14px;margin:10px 0 14px;color:#293241;font-size:12px;line-height:1.42;font-weight:800;}
         .exec-panel-title{margin:0 0 4px;font-size:17px;line-height:1.15;font-weight:950;color:#293241;}
         .exec-panel-sub{margin:0 0 10px;font-size:12px;line-height:1.35;color:#64748B;font-weight:750;}
@@ -13668,9 +13668,9 @@ def render_telecom_project_execution_tab() -> None:
         <div class="exec-hero">
           <div class="exec-hero-grid">
             <div>
-              <p class="exec-k">06 · Ejecución de proyecto</p>
-              <h3 class="exec-t">Cronograma ejecutivo y ruta crítica</h3>
-              <p class="exec-s">Lectura desde 07_Cronograma_Ejecucion. La vista transforma el rango A1:O en Gantt, carga paralela, responsabilidades, solapes, ruta crítica, riesgos y tabla auditable para discusión de plazo.</p>
+              <p class="exec-k">Plan de implementación · Ruta crítica</p>
+              <h3 class="exec-t">Cronograma ejecutivo para ejecutar la solución</h3>
+              <p class="exec-s">Resume la secuencia de compra, suministro, logística, montaje y comisionamiento para conversar plazo con el cliente. La vista destaca hitos, solapes, responsables y riesgos que deben controlarse antes de comprometer fecha.</p>
             </div>
             <div class="exec-kpi-grid">{kpis_html}</div>
           </div>
@@ -16110,7 +16110,16 @@ def render_telecom_tower_eval_analysis():
         return f"{years} años {months} meses"
 
     def section(number: str, title: str, copy: str) -> None:
-        return
+        st.markdown(
+            f"""
+            <div class="telecom-section">
+              <p class="telecom-section-k">{html.escape(str(number))}</p>
+              <h3 class="telecom-section-t">{html.escape(str(title))}</h3>
+              <p class="telecom-section-s">{html.escape(str(copy))}</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
     st.markdown(
         """
@@ -16136,10 +16145,10 @@ def render_telecom_tower_eval_analysis():
         .telecom-dash-body{padding:12px 14px 14px;}
         .telecom-dash-layout{display:grid;grid-template-columns:.9fr 1.1fr;gap:18px;align-items:start;margin-top:12px;}
         .telecom-dash-message{border:1px solid #e0fbfc;border-left:5px solid #ee6c4d;border-radius:12px;background:#F7FBFC;padding:12px 14px;color:#293241;font-size:12.2px;font-weight:760;line-height:1.38;}
-        .telecom-section{margin:22px 0 12px;padding:12px 14px;border-left:5px solid #ee6c4d;background:#F7FBFC;border-radius:10px;border-top:1px solid #e0fbfc;border-right:1px solid #e0fbfc;border-bottom:1px solid #e0fbfc;}
-        .telecom-section-k{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:#293241;font-weight:950;margin:0 0 4px;}
-        .telecom-section-t{font-size:15px;line-height:1.15;color:#0f172a;font-weight:950;margin:0;}
-        .telecom-section-s{font-size:12px;line-height:1.35;color:#64748b;font-weight:740;margin:4px 0 0;}
+        .telecom-section{border:1px solid rgba(117,169,184,.28);border-radius:18px;background:linear-gradient(125deg,#3d5a80 0%,#98c1d9 58%,#293241 100%);box-shadow:0 18px 44px rgba(40,71,99,.10);overflow:hidden;margin:14px 0 16px;padding:22px 24px;}
+        .telecom-section-k{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.78);font-weight:950;margin:0 0 9px;}
+        .telecom-section-t{font-size:clamp(24px,1.9vw,34px);line-height:1.04;color:#fff;font-weight:950;margin:0 0 9px;}
+        .telecom-section-s{font-size:13px;line-height:1.45;color:rgba(255,255,255,.88);font-weight:780;margin:0;max-width:1020px;}
         .telecom-panel-title{
             font-size:15px;
             font-weight:950;
@@ -16171,15 +16180,15 @@ def render_telecom_tower_eval_analysis():
         .telecom-input-t{font-size:20px;line-height:1.1;color:#0f172a;font-weight:950;margin:0 0 6px;}
         .telecom-input-s{font-size:12.5px;line-height:1.38;color:#64748b;font-weight:760;margin:0;max-width:1000px;}
         .telecom-note{border:1px solid #e0fbfc;border-left:5px solid #ee6c4d;background:#FFF7F1;border-radius:10px;padding:13px 15px;color:#293241;font-size:12.5px;font-weight:790;line-height:1.42;margin:8px 0 16px;}
-        .telecom-site-shell{border:1px solid #e0fbfc;border-radius:16px;background:#fff;box-shadow:0 16px 34px rgba(40,71,99,.07);overflow:hidden;margin:10px 0 16px;}
-        .telecom-site-head{display:grid;grid-template-columns:1fr .55fr;gap:18px;align-items:center;padding:18px 20px;background:linear-gradient(135deg,#F7FBFC 0%,#e0fbfc 58%,#98c1d9 100%);border-bottom:1px solid #e0fbfc;}
-        .telecom-site-k{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:#293241;font-weight:950;margin:0 0 6px;}
-        .telecom-site-t{font-size:22px;line-height:1.08;color:#0b1730;font-weight:950;margin:0 0 6px;}
-        .telecom-site-s{font-size:12.5px;line-height:1.4;color:#475569;font-weight:760;margin:0;max-width:900px;}
+        .telecom-site-shell{border:1px solid rgba(117,169,184,.28);border-radius:18px;background:#ffffff;box-shadow:0 18px 44px rgba(40,71,99,.10);overflow:hidden;margin:10px 0 16px;}
+        .telecom-site-head{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(260px,.75fr);gap:22px;align-items:stretch;padding:24px 26px;background:linear-gradient(125deg,#3d5a80 0%,#98c1d9 58%,#293241 100%);border-bottom:1px solid rgba(224,251,252,.35);color:#fff;}
+        .telecom-site-k{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.78);font-weight:950;margin:0 0 9px;}
+        .telecom-site-t{font-size:clamp(24px,1.9vw,34px);line-height:1.04;color:#fff;font-weight:950;margin:0 0 9px;}
+        .telecom-site-s{font-size:13px;line-height:1.45;color:rgba(255,255,255,.88);font-weight:780;margin:0;max-width:920px;}
         .telecom-site-status{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
-        .telecom-site-pill{border:1px solid rgba(40,71,99,.18);border-radius:12px;background:rgba(255,255,255,.74);padding:10px 11px;text-align:center;}
-        .telecom-site-pill strong{display:block;color:#0b1730;font-size:20px;line-height:1;font-weight:950;margin-bottom:4px;}
-        .telecom-site-pill span{display:block;color:#3d5a80;font-size:9.5px;font-weight:950;letter-spacing:.08em;text-transform:uppercase;}
+        .telecom-site-pill{border:1px solid rgba(255,255,255,.26);border-radius:14px;background:rgba(255,255,255,.14);padding:12px 11px;text-align:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.14);}
+        .telecom-site-pill strong{display:block;color:#fff;font-size:20px;line-height:1;font-weight:950;margin-bottom:6px;overflow-wrap:anywhere;}
+        .telecom-site-pill span{display:block;color:rgba(255,255,255,.80);font-size:9.5px;font-weight:950;letter-spacing:.09em;text-transform:uppercase;}
         .telecom-site-body{padding:16px 18px 18px;}
         .telecom-site-block{border:1px solid #e0fbfc;border-radius:13px;background:#fff;margin:0 0 14px;overflow:hidden;box-shadow:0 10px 24px rgba(40,71,99,.055);}
         .telecom-site-block-h{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;background:#F7FBFC;border-bottom:1px solid #e0fbfc;padding:13px 15px;}
@@ -16609,14 +16618,14 @@ def render_telecom_tower_eval_analysis():
             <div class="telecom-site-shell">
               <div class="telecom-site-head">
                 <div>
-                  <p class="telecom-site-k">Pestaña 09_Viento · CSV externo</p>
-                  <h3 class="telecom-site-t">Análisis automático de recurso eólico</h3>
-                  <p class="telecom-site-s">Carga o pega una base CSV con fecha/hora y una o más columnas de velocidad. La pestaña valida datos, ajusta Weibull, estima factor de planta y genera salidas vinculables al modelo.</p>
+                  <p class="telecom-site-k">Recurso eólico · Medición del sitio</p>
+                  <h3 class="telecom-site-t">Caracterización del viento para la propuesta</h3>
+                  <p class="telecom-site-s">Transforma la data del PoP seleccionado en una lectura comercial clara: velocidad representativa, distribución Weibull, calidad del recurso y factor de planta esperado para sustentar la recomendación eólica.</p>
                 </div>
                 <div class="telecom-site-status">
-                  <div class="telecom-site-pill"><strong>CSV</strong><span>Carga flexible</span></div>
-                  <div class="telecom-site-pill"><strong>k/c</strong><span>Weibull</span></div>
-                  <div class="telecom-site-pill"><strong>FP</strong><span>Factor planta</span></div>
+                  <div class="telecom-site-pill"><strong>PoP</strong><span>Dato seleccionado</span></div>
+                  <div class="telecom-site-pill"><strong>Weibull</strong><span>Perfil del viento</span></div>
+                  <div class="telecom-site-pill"><strong>FP</strong><span>Potencial eólico</span></div>
                 </div>
               </div>
             </div>
@@ -18031,7 +18040,11 @@ def render_telecom_tower_eval_analysis():
     criterio = "Balance técnico-económico"
 
     if selected_telecom_market_tab == "01 Perfil del Sitio":
-        section("01 · Perfil del sitio", "Ubicación, consumo, costo energético y tipo de suministro", "Primera lectura para cliente: dónde está el sitio, cuánto consume, cuánto cuesta operar y qué fuente energética predomina antes de evaluar la solución eólica.")
+        section(
+            "01 · Perfil del sitio",
+            "Base del caso técnico-comercial del PoP",
+            "Selecciona el sitio que se evaluará ante el cliente. Esta vista consolida ubicación, demanda, costo energético y mix operativo para construir una propuesta eólica trazable desde la base maestra.",
+        )
         site_data_view = site_data.copy()
         selected_site_row_tab = pd.Series(dtype=object)
         try:
@@ -18313,9 +18326,9 @@ def render_telecom_tower_eval_analysis():
             <div class="telecom-site-shell">
               <div class="telecom-site-head">
                 <div>
-                  <p class="telecom-site-k">Base maestra sitios · Fuente Google Sheets</p>
-                  <h3 class="telecom-site-t">{html.escape(str(site_model["title"]))}</h3>
-                  <p class="telecom-site-s">Ficha comercial del sitio: consumo validado, costo energético, mix operativo y brechas de datos que condicionan la recomendación.</p>
+                  <p class="telecom-site-k">Perfil del sitio · Base maestra cliente</p>
+                  <h3 class="telecom-site-t">Ficha ejecutiva del PoP seleccionado</h3>
+                  <p class="telecom-site-s">Consolida los datos que explican el caso de generación eólica: ubicación, consumo, costo energético, mix actual y brechas que deben validarse antes de presentar la solución final.</p>
                 </div>
                 <div class="telecom-site-status">
                   <div class="telecom-site-pill"><strong>{html.escape(status_variables_display)}</strong><span>Campos A:U</span></div>
@@ -18560,7 +18573,11 @@ def render_telecom_tower_eval_analysis():
 
         return
 
-        section("01B · Consumo y carga", "Boleta, demanda mensual y perfil horario", "Lectura integrada dentro de Datos del sitio: boletas mensuales, tarifa red, perfil horario y salidas que alimentan el simulador.")
+        section(
+            "01B · Consumo y carga",
+            "Demanda eléctrica que dimensiona la solución",
+            "Lectura de consumo, tarifa y perfil horario para explicar al cliente el punto de partida energético antes de comparar generación eólica, respaldo y ahorro esperado.",
+        )
         bill_avg = float(billing_summary.get("Promedio mensual boletas") or billing_df["Consumo kWh"].mean() or 0.0)
         bill_max = float(billing_summary.get("Consumo máximo") or billing_df["Consumo kWh"].max() or 0.0)
         bill_min = float(billing_summary.get("Consumo mínimo") or billing_df["Consumo kWh"].min() or 0.0)
@@ -18784,8 +18801,8 @@ def render_telecom_tower_eval_analysis():
         render_active_pop_note("producción por turbina")
         section(
             "03 · Producción por turbina",
-            "Curva neta, potencia nominal y operación",
-            "Lectura técnica orientada a producción: velocidad a hub, Cp, potencia neta, torque, Betz usado y estado operacional.",
+            "Producción esperada de generación eólica",
+            "Convierte el recurso del sitio en energía útil por alternativa. La lectura permite comparar potencia, factor planta, producción anual y ajuste operativo antes de cerrar la recomendación técnica.",
         )
 
         def resource_row(name: str) -> pd.Series | None:
@@ -19070,9 +19087,9 @@ def render_telecom_tower_eval_analysis():
             <div class="telecom-site-shell">
               <div class="telecom-site-head">
                 <div>
-                  <p class="telecom-site-k">00_RESUMEN + 02_FICHA_GREEF · Curvas GREEF por turbina</p>
-                  <h3 class="telecom-site-t">{html.escape(production_title)}</h3>
-                  <p class="telecom-site-s">{html.escape(production_copy)}</p>
+                  <p class="telecom-site-k">Producción eólica · Curvas reales por turbina</p>
+                  <h3 class="telecom-site-t">Energía esperada por alternativa técnica</h3>
+                  <p class="telecom-site-s">Integra curvas reales GREEF con el recurso del PoP para estimar generación, factor planta y desempeño por turbina. Esta lectura respalda la selección técnica que verá el cliente.</p>
                 </div>
                 <div class="telecom-site-status">
                   <div class="telecom-site-pill"><strong>{html.escape(str(best_fp_row["Modelo"]))}</strong><span>Mayor FP</span></div>
@@ -19242,8 +19259,8 @@ def render_telecom_tower_eval_analysis():
 
         section(
             "05 · Retorno, riesgo y plan financiero",
-            "Sensibilidad de recurso, factor planta y payback",
-            "Cierre financiero para cliente: estima cómo cambia AEP, flujo neto y recuperación ante distintos escenarios Weibull.",
+            "Sensibilidad financiera del recurso eólico",
+            "Evalúa cómo cambia la producción, el flujo neto y el payback si el recurso real queda por debajo o por encima del escenario base. Sirve para conversar riesgo, rango de retorno y decisión de inversión.",
         )
 
         characteristics_sens = turbine_characteristics_df.copy() if isinstance(turbine_characteristics_df, pd.DataFrame) else pd.DataFrame()
@@ -19432,9 +19449,9 @@ def render_telecom_tower_eval_analysis():
             <div class="telecom-site-shell">
               <div class="telecom-site-head">
                 <div>
-                  <p class="telecom-site-k">05_SENSIBILIDADES · Recurso eólico, factor planta y payback</p>
-                  <h3 class="telecom-site-t">{html.escape(sens_turbine)} · sensibilidad Weibull ejecutiva</h3>
-                  <p class="telecom-site-s">La matriz convierte el parámetro c Weibull en velocidad a hub, AEP anual, factor planta, flujo neto y payback. Sirve para responder qué pasa si el recurso real queda por debajo o por encima del escenario base.</p>
+                  <p class="telecom-site-k">Riesgo y retorno · Sensibilidad del recurso</p>
+                  <h3 class="telecom-site-t">{html.escape(sens_turbine)} · rango de desempeño para decisión</h3>
+                  <p class="telecom-site-s">Muestra al cliente cómo varían generación, flujo neto y payback cuando cambia el recurso eólico. Permite presentar la recomendación con rango de riesgo y no como un valor único.</p>
                 </div>
                 <div class="telecom-site-status">
                   <div class="telecom-site-pill"><strong>{installed_kw_sens:.1f} kW</strong><span>Potencia evaluada</span></div>
