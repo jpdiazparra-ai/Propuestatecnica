@@ -353,7 +353,7 @@ TURBINE_CAPEX_SUPPLY_INSTALLATION_CSV_URL_DEFAULT = (
 )
 TURBINE_CAPEX_SUPPLY_INSTALLATION_PUB_BASE_URL = TURBINE_CAPEX_SUPPLY_INSTALLATION_CSV_URL_DEFAULT.split("?")[0]
 TURBINE_CAPEX_SUPPLY_INSTALLATION_PUBHTML_URL = f"{TURBINE_CAPEX_SUPPLY_INSTALLATION_PUB_BASE_URL}html"
-TURBINE_CAPEX_SUPPLY_INSTALLATION_SOURCE_VERSION = 20260706
+TURBINE_CAPEX_SUPPLY_INSTALLATION_SOURCE_VERSION = 2026070602
 TURBINE_CAPEX_SUPPLY_INSTALLATION_SOURCE_SHEETS = {
     "00_Resumen": "855291460",
     "00_Resumen_CAPEX": "855291460",
@@ -400,6 +400,7 @@ GANTT_COLUMN_ALIASES = {
     "MitigaciÃ³n breve": "Mitigación breve",
 }
 REMOTE_FETCH_TTL_SECONDS = 3600
+CAPEX_REMOTE_FETCH_TTL_SECONDS = 120
 REMOTE_CONNECT_TIMEOUT_SECONDS = 5
 REMOTE_READ_TIMEOUT_SECONDS = 45
 REMOTE_FETCH_RETRIES = 2
@@ -558,6 +559,8 @@ def turbine_power_curve_csv_url(model: str, refresh_nonce: int = 0) -> str:
 
 
 def turbine_capex_supply_installation_csv_url(sheet_name: str = "00_Resumen", refresh_nonce: int = 0) -> str:
+    if str(sheet_name).strip().casefold() in {"00_resumen", "00_resumen_capex"}:
+        return TURBINE_CAPEX_SUPPLY_INSTALLATION_CSV_URL_DEFAULT
     gid = TURBINE_CAPEX_SUPPLY_INSTALLATION_SOURCE_SHEETS.get(sheet_name)
     try:
         gid_map = load_google_pubhtml_sheet_gids(TURBINE_CAPEX_SUPPLY_INSTALLATION_PUBHTML_URL, refresh_nonce=refresh_nonce)
@@ -571,6 +574,23 @@ def turbine_capex_supply_installation_csv_url(sheet_name: str = "00_Resumen", re
     if gid:
         return f"{TURBINE_CAPEX_SUPPLY_INSTALLATION_PUB_BASE_URL}?gid={gid}&single=true&output=csv"
     return TURBINE_CAPEX_SUPPLY_INSTALLATION_CSV_URL_DEFAULT
+
+
+def clear_turbine_capex_caches() -> None:
+    for cached_loader in (
+        fetch_remote_file_bytes,
+        load_google_pubhtml_sheet_gids,
+        load_turbine_capex_supply_installation,
+        load_turbine_capex_supply_models,
+        load_turbine_capex_wbs_long,
+        load_turbine_capex_mounting_detail,
+        load_turbine_project_schedule,
+        load_propuesta_catalogo_tec,
+    ):
+        try:
+            cached_loader.clear()
+        except Exception:
+            pass
 
 
 def parse_curve_number(value: object, default: float = np.nan) -> float:
@@ -732,7 +752,7 @@ def load_turbine_capex_defaults_from_resumen(refresh_nonce: int = 0) -> dict[str
     return capex_by_model
 
 
-@st.cache_data(show_spinner=False, ttl=REMOTE_FETCH_TTL_SECONDS, persist="disk")
+@st.cache_data(show_spinner=False, ttl=CAPEX_REMOTE_FETCH_TTL_SECONDS, persist="disk")
 def load_turbine_capex_supply_installation(refresh_nonce: int = 0) -> pd.DataFrame:
     raw = read_remote_csv(
         turbine_capex_supply_installation_csv_url("00_Resumen", refresh_nonce=refresh_nonce),
@@ -861,7 +881,7 @@ def load_turbine_capex_supply_installation(refresh_nonce: int = 0) -> pd.DataFra
     return normalized.sort_values(["_order", "Potencia kW"]).drop(columns="_order").reset_index(drop=True)
 
 
-@st.cache_data(show_spinner=False, ttl=REMOTE_FETCH_TTL_SECONDS, persist="disk")
+@st.cache_data(show_spinner=False, ttl=CAPEX_REMOTE_FETCH_TTL_SECONDS, persist="disk")
 def load_turbine_capex_supply_models(refresh_nonce: int = 0) -> pd.DataFrame:
     raw = read_remote_csv(
         turbine_capex_supply_installation_csv_url("01_Modelos", refresh_nonce=refresh_nonce),
@@ -901,7 +921,7 @@ def load_turbine_capex_supply_models(refresh_nonce: int = 0) -> pd.DataFrame:
     return df.reset_index(drop=True)
 
 
-@st.cache_data(show_spinner=False, ttl=REMOTE_FETCH_TTL_SECONDS, persist="disk")
+@st.cache_data(show_spinner=False, ttl=CAPEX_REMOTE_FETCH_TTL_SECONDS, persist="disk")
 def load_turbine_capex_wbs_long(refresh_nonce: int = 0) -> pd.DataFrame:
     raw = read_remote_csv(
         turbine_capex_supply_installation_csv_url("03_CAPEX_WBS_USD_CLP", refresh_nonce=refresh_nonce),
@@ -973,7 +993,7 @@ def load_turbine_capex_wbs_long(refresh_nonce: int = 0) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-@st.cache_data(show_spinner=False, ttl=REMOTE_FETCH_TTL_SECONDS, persist="disk")
+@st.cache_data(show_spinner=False, ttl=CAPEX_REMOTE_FETCH_TTL_SECONDS, persist="disk")
 def load_turbine_capex_mounting_detail(refresh_nonce: int = 0) -> pd.DataFrame:
     raw = read_remote_csv(
         turbine_capex_supply_installation_csv_url("04_Montaje_Detalle_CLP", refresh_nonce=refresh_nonce),
@@ -1056,7 +1076,7 @@ def load_turbine_capex_mounting_detail(refresh_nonce: int = 0) -> pd.DataFrame:
     return normalized.reset_index(drop=True)
 
 
-@st.cache_data(show_spinner=False, ttl=REMOTE_FETCH_TTL_SECONDS, persist="disk")
+@st.cache_data(show_spinner=False, ttl=CAPEX_REMOTE_FETCH_TTL_SECONDS, persist="disk")
 def load_turbine_project_schedule(refresh_nonce: int = 0) -> tuple[pd.DataFrame, dict[str, str]]:
     raw = read_remote_csv(
         turbine_capex_supply_installation_csv_url("07_Cronograma_Ejecucion", refresh_nonce=refresh_nonce),
@@ -2204,7 +2224,7 @@ def load_propuesta_site_options(refresh_nonce: int = 0) -> pd.DataFrame:
     return _build_transposed_site_table(raw_df)
 
 
-@st.cache_data(show_spinner=False, ttl=REMOTE_FETCH_TTL_SECONDS, persist="disk")
+@st.cache_data(show_spinner=False, ttl=CAPEX_REMOTE_FETCH_TTL_SECONDS, persist="disk")
 def load_propuesta_catalogo_tec(refresh_nonce: int = 0) -> pd.DataFrame:
     raw_df = read_remote_csv(
         turbine_capex_supply_installation_csv_url("00_Resumen", refresh_nonce=refresh_nonce),
@@ -12407,6 +12427,15 @@ def _telecom_score(series: pd.Series, higher_is_better: bool = False) -> pd.Seri
 
 
 def render_telecom_capex_supply_installation_tab() -> None:
+    refresh_col, source_col = st.columns([0.28, 0.72])
+    with refresh_col:
+        if st.button("Actualizar CAPEX desde URL", key="refresh_capex_05", use_container_width=True):
+            clear_turbine_capex_caches()
+            st.session_state["data_refresh_nonce"] = int(st.session_state.get("data_refresh_nonce", 0)) + 1
+            st.rerun()
+    with source_col:
+        st.caption(f"Fuente CAPEX: {TURBINE_CAPEX_SUPPLY_INSTALLATION_CSV_URL_DEFAULT}")
+
     capex_df = load_turbine_capex_supply_installation(refresh_nonce=data_refresh_nonce).copy()
     wbs_df = load_turbine_capex_wbs_long(refresh_nonce=data_refresh_nonce).copy()
     mounting_detail_df = load_turbine_capex_mounting_detail(refresh_nonce=data_refresh_nonce).copy()
@@ -22509,6 +22538,7 @@ if st.sidebar.button("🔁 Actualizar datos desde URL"):
         st.session_state["restore_telecom_market_tab_after_refresh"] = True
     fetch_remote_file_bytes.clear()
     load_project_gantt_data.clear()
+    clear_turbine_capex_caches()
     st.session_state["data_refresh_nonce"] += 1
     st.rerun()
 
