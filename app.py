@@ -16253,10 +16253,11 @@ def render_telecom_tower_eval_analysis():
     def render_active_pop_note(context_label: str = "esta pestaña") -> None:
         active_pop = str(st.session_state.get("telecom_client_selected_pop", "") or "").strip()
         if active_pop:
+            active_label = "Caso activo" if normalize_key(active_pop) == normalize_key(manual_iteration_label) else "PoP activo"
             st.markdown(
                 f"""
                 <div class="telecom-note">
-                  <b>PoP activo:</b> {html.escape(active_pop)} · selección definida en
+                  <b>{html.escape(active_label)}:</b> {html.escape(active_pop)} · selección definida en
                   <b>01 Perfil del Sitio</b>. Los cálculos y visualizaciones de {html.escape(context_label)}
                   usan esta selección como caso vigente.
                 </div>
@@ -16715,6 +16716,8 @@ def render_telecom_tower_eval_analysis():
                     """,
                     unsafe_allow_html=True,
                 )
+            elif normalize_key(selected_pop_for_wind) == normalize_key(manual_iteration_label):
+                st.info("Iteración manual activa: carga o pega un CSV de viento, o usa los supuestos manuales para alimentar Producción y Recomendación.")
             elif selected_pop_for_wind:
                 st.info(f"No hay CSV de viento asociado al POP seleccionado: {selected_pop_for_wind}. Puedes cargar o pegar un CSV manualmente.")
             try:
@@ -17955,6 +17958,7 @@ def render_telecom_tower_eval_analysis():
         "05 CAPEX Instalado",
         "06 Ejecución de proyecto",
     ]
+    manual_iteration_label = "Iteración manual"
     telecom_market_tab_aliases = {
         "01 Sitio y Demanda": "01 Perfil del Sitio",
         "02 Recurso Eólico": "02 Recurso de Viento",
@@ -17989,6 +17993,21 @@ def render_telecom_tower_eval_analysis():
         default=telecom_market_tabs[0],
         key="telecom_market_tab_selector",
     )
+    active_case_label = str(st.session_state.get("telecom_client_selected_pop", "") or "").strip()
+    manual_iteration_active = normalize_key(active_case_label) == normalize_key(manual_iteration_label)
+    if selected_telecom_market_tab != "01 Perfil del Sitio" and not active_case_label:
+        st.info("Selecciona un PoP / sitio o Iteración manual en 01 Perfil del Sitio para habilitar esta pestaña.")
+        return
+    manual_resource_ready = bool(st.session_state.get("telecom_09_viento_outputs")) or bool(
+        (st.session_state.get("telecom_09_manual_wind_outputs", {}) or {}).get("enabled", False)
+    )
+    if (
+        manual_iteration_active
+        and selected_telecom_market_tab in {"03 Producción por Turbina", "04 Recomendación Comercial", "05 CAPEX Instalado", "06 Ejecución de proyecto"}
+        and not manual_resource_ready
+    ):
+        st.info("Iteración manual activa: completa primero 02 Recurso de Viento con un CSV o con supuestos manuales.")
+        return
 
     def _analysis_context_state() -> dict:
         ctx = st.session_state.get("telecom_00_analysis_context", {}) or {}
@@ -18051,12 +18070,34 @@ def render_telecom_tower_eval_analysis():
             pop_options_tab = list(dict.fromkeys(pop_options_tab))
             if pop_options_tab:
                 placeholder_pop = "Selecciona una alternativa"
+                previous_case_tab = str(st.session_state.get("telecom_client_selected_pop", "") or "").strip()
+
+                def clear_case_outputs() -> None:
+                    for analysis_key in (
+                        "telecom_00_analysis_recommended",
+                        "telecom_00_analysis_sim_df",
+                        "telecom_00_analysis_context",
+                        "telecom_03_curve_active_summary_df",
+                        "telecom_03_curve_summary_df",
+                        "telecom_03_curve_points_df",
+                        "telecom_09_viento_outputs",
+                        "telecom_09_manual_wind_outputs",
+                        "telecom_09_wind_saved_bytes",
+                        "telecom_09_wind_saved_text",
+                        "telecom_09_wind_saved_source",
+                        "telecom_09_wind_saved_rows",
+                        "telecom_09_auto_wind_signature",
+                    ):
+                        st.session_state.pop(analysis_key, None)
+
                 stored_pop_tab = str(
                     st.session_state.get("telecom_client_selected_pop")
                     or ""
                 ).strip()
                 stored_pop_key = normalize_key(stored_pop_tab)
                 default_pop_idx = 0
+                if stored_pop_key == normalize_key(manual_iteration_label):
+                    default_pop_idx = 1
                 for option_idx, option in enumerate(pop_options_tab):
                     option_key = normalize_key(option)
                     if (
@@ -18064,25 +18105,27 @@ def render_telecom_tower_eval_analysis():
                         or (stored_pop_key and stored_pop_key in option_key)
                         or (option_key and option_key in stored_pop_key)
                     ):
-                        default_pop_idx = option_idx + 1
+                        default_pop_idx = option_idx + 2
                         break
                 selected_pop_tab = st.selectbox(
                     "PoP / sitio",
-                    options=[placeholder_pop] + pop_options_tab,
+                    options=[placeholder_pop, manual_iteration_label] + pop_options_tab,
                     index=default_pop_idx,
                     key="site_demand_pop_selector",
                     help="Lista cargada desde el CSV maestro de sitios.",
                 )
                 if selected_pop_tab == placeholder_pop:
                     st.session_state["telecom_client_selected_pop"] = ""
-                    for analysis_key in (
-                        "telecom_00_analysis_recommended",
-                        "telecom_00_analysis_sim_df",
-                        "telecom_00_analysis_context",
-                    ):
-                        st.session_state.pop(analysis_key, None)
+                    clear_case_outputs()
                     st.info("Selecciona una alternativa PoP / sitio para cargar la base técnica y económica del caso.")
+                elif selected_pop_tab == manual_iteration_label:
+                    if previous_case_tab != selected_pop_tab:
+                        clear_case_outputs()
+                    st.session_state["telecom_client_selected_pop"] = manual_iteration_label
+                    st.info("Iteración manual activa: carga un CSV de viento o completa los supuestos manuales en 02 Recurso de Viento.")
                 else:
+                    if previous_case_tab != selected_pop_tab:
+                        clear_case_outputs()
                     st.session_state["telecom_client_selected_pop"] = selected_pop_tab
                     site_matches_tab = proposal_site_options_tab[
                         proposal_site_options_tab[pop_col_tab].astype(str).str.strip() == selected_pop_tab
@@ -18741,6 +18784,9 @@ def render_telecom_tower_eval_analysis():
 
     if selected_telecom_market_tab == "05 CAPEX Instalado":
         render_active_pop_note("CAPEX instalado")
+        if not st.session_state.get("telecom_00_analysis_recommended"):
+            st.info("Calcula primero la recomendación comercial en 04 para construir el CAPEX de la alternativa seleccionada.")
+            return
         render_telecom_capex_supply_installation_tab()
         return
 
@@ -19773,7 +19819,9 @@ def render_telecom_scenario_simulator(
             profile_selected_pop = str(st.session_state.get("telecom_client_selected_pop", "") or "").strip()
             profile_selected_key = normalize_key(profile_selected_pop)
             selected_pop = ""
-            if profile_selected_pop:
+            if profile_selected_key == normalize_key("Iteración manual"):
+                selected_pop = "Iteración manual"
+            elif profile_selected_pop:
                 selected_pop = next(
                     (
                         option
@@ -19797,9 +19845,10 @@ def render_telecom_scenario_simulator(
                 """,
                 unsafe_allow_html=True,
             )
-            site_matches = proposal_site_options[proposal_site_options[pop_col].astype(str).str.strip() == selected_pop]
-            if not site_matches.empty:
-                selected_site_row = site_matches.iloc[0]
+            if normalize_key(selected_pop) != normalize_key("Iteración manual"):
+                site_matches = proposal_site_options[proposal_site_options[pop_col].astype(str).str.strip() == selected_pop]
+                if not site_matches.empty:
+                    selected_site_row = site_matches.iloc[0]
             cost_defaults_version = 2026070602
             if (
                 st.session_state.get("sim6_pop_selector_prev") != selected_pop
