@@ -12586,26 +12586,30 @@ def render_telecom_capex_supply_installation_tab() -> None:
 
     if not subtotal_df.empty:
         subtotal_df["Área CAPEX"] = subtotal_df.apply(capex_area_from_row, axis=1)
+        subtotal_df["Monto CLP"] = subtotal_df["Monto CLP"] * recommended_units
+        subtotal_df["Monto USD"] = subtotal_df["Monto USD"] * recommended_units
     if not detail_df.empty:
         detail_df["Área CAPEX"] = detail_df.apply(capex_area_from_row, axis=1)
+        detail_df["Monto CLP"] = detail_df["Monto CLP"] * recommended_units
+        detail_df["Monto USD"] = detail_df["Monto USD"] * recommended_units
 
     macro_area_df = pd.DataFrame(
         [
             {
                 "Área CAPEX": "CAPEX suministro",
-                "Monto CLP": float(selected_row.get("CAPEX suministro CLP", 0.0) or 0.0),
-                "Alcance": "Paquete proveedor EXW: turbina, torre/mástil y eléctricos principales.",
+                "Monto CLP": float(selected_row.get("CAPEX suministro CLP", 0.0) or 0.0) * recommended_units,
+                "Alcance": f"Paquete proveedor EXW para {recommended_units} unidad(es): turbina, torre/mástil y eléctricos principales.",
             },
             {
                 "Área CAPEX": "CAPEX montaje",
-                "Monto CLP": float(selected_row.get("CAPEX montaje sin suministro CLP", 0.0) or 0.0),
-                "Alcance": "Instalación local: montaje, OOCC, logística, gestión e imprevistos.",
+                "Monto CLP": float(selected_row.get("CAPEX montaje sin suministro CLP", 0.0) or 0.0) * recommended_units,
+                "Alcance": f"Instalación local para {recommended_units} unidad(es): montaje, OOCC, logística, gestión e imprevistos.",
             },
         ]
     )
     macro_area_df["Participación %"] = np.where(
-        installed_unit_clp > 0,
-        macro_area_df["Monto CLP"] / installed_unit_clp * 100.0,
+        installed_total_clp > 0,
+        macro_area_df["Monto CLP"] / installed_total_clp * 100.0,
         np.nan,
     )
 
@@ -12614,7 +12618,7 @@ def render_telecom_capex_supply_installation_tab() -> None:
     summary_table["Participación"] = macro_area_df["Participación %"].map(fmt_pct)
     summary_table = summary_table[["Área CAPEX", "Monto CLP", "Participación", "Alcance"]]
 
-    st.markdown('<p class="capex-panel-title">Costo instalado por área CAPEX</p><p class="capex-panel-sub">Primer corte de lectura: separa el costo de suministro tecnológico del costo de montaje e instalación local para la turbina recomendada.</p>', unsafe_allow_html=True)
+    st.markdown('<p class="capex-panel-title">Costo instalado por área CAPEX</p><p class="capex-panel-sub">Primer corte de lectura: separa suministro tecnológico y montaje local para el modelo y cantidad definidos en la pestaña 04.</p>', unsafe_allow_html=True)
     fig_area = go.Figure()
     for area_name, area_color in [("CAPEX suministro", palette["blue"]), ("CAPEX montaje", palette["orange"])]:
         area_row = macro_area_df[macro_area_df["Área CAPEX"].eq(area_name)]
@@ -12726,20 +12730,20 @@ def render_telecom_capex_supply_installation_tab() -> None:
         else:
             st.info("No hay partidas de suministro positivas en 03_CAPEX_WBS_USD_CLP para el modelo seleccionado.")
     with right:
-        st.markdown('<p class="capex-panel-title">Construcción del CAPEX instalado</p><p class="capex-panel-sub">Cascada WBS desde suministro EXW hasta CAPEX instalado referencial.</p>', unsafe_allow_html=True)
+        st.markdown('<p class="capex-panel-title">Construcción del CAPEX instalado</p><p class="capex-panel-sub">Cascada WBS desde suministro EXW hasta CAPEX instalado total de la selección comercial.</p>', unsafe_allow_html=True)
         waterfall_items = subtotal_df.copy()
         if not waterfall_items.empty:
             waterfall_items["Etiqueta"] = waterfall_items["Partida"].map(lambda value: short_label(value, 24))
             fig_waterfall = go.Figure(go.Waterfall(
                 x=waterfall_items["Etiqueta"].tolist() + ["Total instalado"],
-                y=waterfall_items["Monto CLP"].tolist() + [installed_unit_clp],
+                y=waterfall_items["Monto CLP"].tolist() + [installed_total_clp],
                 measure=["relative"] * len(waterfall_items) + ["total"],
                 name="CAPEX suministro / montaje",
                 showlegend=False,
                 connector={"line": {"color": "rgba(41,50,65,.35)"}},
                 increasing={"marker": {"color": palette["orange"]}},
                 totals={"marker": {"color": palette["ink"]}},
-                text=[format_clp(v) for v in waterfall_items["Monto CLP"].tolist()] + [format_clp(installed_unit_clp)],
+                text=[format_clp(v) for v in waterfall_items["Monto CLP"].tolist()] + [format_clp(installed_total_clp)],
                 textposition="outside",
                 customdata=np.stack([waterfall_items["Área CAPEX"]], axis=-1).tolist() + [["Total instalado"]],
                 hovertemplate="<b>%{x}</b><br>Área: %{customdata[0]}<br>$%{y:,.0f} CLP<extra></extra>",
@@ -12840,7 +12844,7 @@ def render_telecom_capex_supply_installation_tab() -> None:
         hierarchy_base_df["_rank"] = np.arange(1, len(hierarchy_base_df) + 1)
         materiality_clp = max(
             float(hierarchy_base_df["Monto CLP"].sum() or 0.0) * 0.012,
-            float(installed_unit_clp or 0.0) * 0.018,
+            float(installed_total_clp or 0.0) * 0.018,
         )
         major_mask = (hierarchy_base_df["_rank"] <= 18) | (hierarchy_base_df["Monto CLP"] >= materiality_clp)
         hierarchy_df = hierarchy_base_df[major_mask].copy()
@@ -16494,6 +16498,21 @@ def render_telecom_tower_eval_analysis():
                 "_power_neta": power_neta,
             }
 
+        selected_pop_for_wind = str(st.session_state.get("telecom_client_selected_pop", "") or "").strip()
+        pop_wind_files = {
+            "ZP013": Path("data/wind/ZP013.csv"),
+            "MG888": Path("data/wind/MG888.csv"),
+            "FS608": Path("data/wind/FS608.csv"),
+        }
+        selected_pop_key = ""
+        selected_pop_norm = normalize_key(selected_pop_for_wind)
+        for pop_code in pop_wind_files:
+            if normalize_key(pop_code) in selected_pop_norm:
+                selected_pop_key = pop_code
+                break
+        auto_wind_path = pop_wind_files.get(selected_pop_key)
+        auto_wind_locked = bool(auto_wind_path and auto_wind_path.exists())
+
         st.markdown(
             """
             <div class="telecom-site-shell">
@@ -16522,14 +16541,26 @@ def render_telecom_tower_eval_analysis():
                 st.markdown("##### Carga de datos y persistencia")
                 upload_col, paste_col = st.columns([0.72, 1.28])
                 with upload_col:
-                    uploaded_file = st.file_uploader("Cargar CSV de viento", type=["csv"], key="telecom_09_wind_csv_file")
-                    delimiter_mode = st.selectbox("Separador", ["Automático", ",", ";", "\\t"], index=0, key="telecom_09_wind_sep")
+                    uploaded_file = st.file_uploader(
+                        "Cargar CSV de viento",
+                        type=["csv"],
+                        key="telecom_09_wind_csv_file",
+                        disabled=auto_wind_locked,
+                    )
+                    delimiter_mode = st.selectbox(
+                        "Separador",
+                        ["Automático", ",", ";", "\\t"],
+                        index=0,
+                        key="telecom_09_wind_sep",
+                        disabled=auto_wind_locked,
+                    )
                 with paste_col:
                     pasted_csv = st.text_area(
                         "Pegar CSV de viento",
                         height=126,
                         placeholder="fecha_hora,viento_30m,viento_50m\n2026-01-01 00:00,5.2,6.1\n2026-01-01 01:00,4.8,5.7",
                         key="telecom_09_wind_csv_text",
+                        disabled=auto_wind_locked,
                     )
                 bridge_cols = st.columns([0.48, 0.32, 0.20])
                 with bridge_cols[0]:
@@ -16540,7 +16571,7 @@ def render_telecom_tower_eval_analysis():
                     status_text = f"CSV guardado: {saved_source} · {saved_rows:,} filas" if saved_source else "Sin CSV guardado"
                     st.caption(status_text.replace(",", "."))
                 with bridge_cols[2]:
-                    if st.button("Limpiar CSV guardado", key="telecom_09_clear_saved_wind"):
+                    if st.button("Limpiar CSV guardado", key="telecom_09_clear_saved_wind", disabled=auto_wind_locked):
                         for key in [
                             "telecom_09_wind_saved_bytes",
                             "telecom_09_wind_saved_text",
@@ -16555,6 +16586,8 @@ def render_telecom_tower_eval_analysis():
             raw_df = pd.DataFrame()
             source_label = ""
             sep_arg = None if delimiter_mode == "Automático" else ("\t" if delimiter_mode == "\\t" else delimiter_mode)
+            if auto_wind_locked:
+                sep_arg = None
             selected_pop_for_wind = str(st.session_state.get("telecom_client_selected_pop", "") or "").strip()
             pop_wind_files = {
                 "ZP013": Path("data/wind/ZP013.csv"),
@@ -16594,14 +16627,14 @@ def render_telecom_tower_eval_analysis():
             elif selected_pop_for_wind:
                 st.info(f"No hay CSV de viento asociado al POP seleccionado: {selected_pop_for_wind}. Puedes cargar o pegar un CSV manualmente.")
             try:
-                if uploaded_file is not None:
+                if uploaded_file is not None and not auto_wind_locked:
                     uploaded_bytes = uploaded_file.getvalue()
                     st.session_state["telecom_09_wind_saved_bytes"] = uploaded_bytes
                     st.session_state["telecom_09_wind_saved_text"] = ""
                     st.session_state["telecom_09_wind_saved_source"] = uploaded_file.name
                     raw_df = pd.read_csv(BytesIO(uploaded_bytes), sep=sep_arg, engine="python")
                     source_label = uploaded_file.name
-                elif pasted_csv.strip():
+                elif pasted_csv.strip() and not auto_wind_locked:
                     st.session_state["telecom_09_wind_saved_text"] = pasted_csv
                     st.session_state["telecom_09_wind_saved_bytes"] = b""
                     st.session_state["telecom_09_wind_saved_source"] = "CSV pegado"
@@ -16779,6 +16812,8 @@ def render_telecom_tower_eval_analysis():
 
             with st.container(border=True):
                 st.markdown("##### Centro de control del recurso eólico")
+                if auto_wind_locked:
+                    st.caption("Controles bloqueados: el recurso eólico proviene del CSV asociado al POP seleccionado.")
                 ctrl_a, ctrl_b, ctrl_c, ctrl_d = st.columns([1.05, 1.0, 1.0, 1.15])
                 with ctrl_a:
                     target_wind_height_m = st.number_input(
@@ -16789,9 +16824,18 @@ def render_telecom_tower_eval_analysis():
                         step=0.5,
                         key="telecom_09_target_height_m",
                         help="El dashboard interpola velocidad, Weibull, FP y generación a esta altura usando las columnas cargadas.",
+                        disabled=auto_wind_locked,
                     )
                 with ctrl_b:
-                    outlier_limit = st.number_input("Límite outlier velocidad (m/s)", min_value=12.0, max_value=80.0, value=35.0, step=1.0, key="telecom_09_outlier_limit")
+                    outlier_limit = st.number_input(
+                        "Límite outlier velocidad (m/s)",
+                        min_value=12.0,
+                        max_value=80.0,
+                        value=35.0,
+                        step=1.0,
+                        key="telecom_09_outlier_limit",
+                        disabled=auto_wind_locked,
+                    )
                 selected_datetime = None
                 if "Fecha/hora" in raw_df.columns and datetime_detection_meta.get("valid_ratio", 0.0) >= 0.70:
                     selected_datetime = "Fecha/hora"
@@ -16819,10 +16863,13 @@ def render_telecom_tower_eval_analysis():
                 '<div class="sim6-input-note">Estos supuestos se usan como respaldo para la pestaña 03 Producción por Turbina cuando no existe un CSV válido cargado en Recurso de Viento. Si hay CSV activo, el archivo cargado mantiene prioridad.</div>',
                 unsafe_allow_html=True,
             )
+            if auto_wind_locked:
+                st.caption("Supuestos manuales bloqueados: existe recurso eólico cargado automáticamente para el POP seleccionado.")
             manual_enabled = st.checkbox(
                 "Usar estos supuestos como respaldo cuando no hay CSV válido",
                 value=bool(st.session_state.get("telecom_09_manual_wind_enabled", True)),
                 key="telecom_09_manual_wind_enabled",
+                disabled=auto_wind_locked,
             )
             man_c1, man_c2, man_c3, man_c4 = st.columns(4)
             with man_c1:
@@ -16833,6 +16880,7 @@ def render_telecom_tower_eval_analysis():
                     value=float(st.session_state.get("telecom_09_manual_target_height_m", 15.0)),
                     step=0.5,
                     key="telecom_09_manual_target_height_m",
+                    disabled=auto_wind_locked,
                 )
                 manual_mean_speed = st.number_input(
                     "Velocidad media medida (m/s)",
@@ -16841,6 +16889,7 @@ def render_telecom_tower_eval_analysis():
                     value=float(st.session_state.get("telecom_09_manual_mean_speed_ms", 7.0)),
                     step=0.1,
                     key="telecom_09_manual_mean_speed_ms",
+                    disabled=auto_wind_locked,
                 )
             with man_c2:
                 manual_measurement_height = st.number_input(
@@ -16850,6 +16899,7 @@ def render_telecom_tower_eval_analysis():
                     value=float(st.session_state.get("telecom_09_manual_measurement_height_m", 10.0)),
                     step=0.5,
                     key="telecom_09_manual_measurement_height_m",
+                    disabled=auto_wind_locked,
                 )
                 manual_alpha = st.number_input(
                     "Exponente rugosidad alpha",
@@ -16858,6 +16908,7 @@ def render_telecom_tower_eval_analysis():
                     value=float(st.session_state.get("telecom_09_manual_alpha", 0.14)),
                     step=0.01,
                     key="telecom_09_manual_alpha",
+                    disabled=auto_wind_locked,
                 )
             with man_c3:
                 manual_weibull_k = st.number_input(
@@ -16867,6 +16918,7 @@ def render_telecom_tower_eval_analysis():
                     value=float(st.session_state.get("telecom_09_manual_weibull_k", 2.0)),
                     step=0.05,
                     key="telecom_09_manual_weibull_k",
+                    disabled=auto_wind_locked,
                 )
                 manual_density = st.number_input(
                     "Densidad aire (kg/m³)",
@@ -16875,6 +16927,7 @@ def render_telecom_tower_eval_analysis():
                     value=float(st.session_state.get("telecom_09_manual_density", 1.225)),
                     step=0.005,
                     key="telecom_09_manual_density",
+                    disabled=auto_wind_locked,
                 )
             with man_c4:
                 manual_availability = st.number_input(
@@ -16884,6 +16937,7 @@ def render_telecom_tower_eval_analysis():
                     value=float(st.session_state.get("telecom_09_manual_availability", 95.0)),
                     step=0.5,
                     key="telecom_09_manual_availability",
+                    disabled=auto_wind_locked,
                 )
                 manual_losses = st.number_input(
                     "Pérdidas totales (%)",
@@ -16892,6 +16946,7 @@ def render_telecom_tower_eval_analysis():
                     value=float(st.session_state.get("telecom_09_manual_total_losses", 5.0)),
                     step=0.5,
                     key="telecom_09_manual_total_losses",
+                    disabled=auto_wind_locked,
                 )
 
             manual_reference_fp = st.slider(
@@ -16902,6 +16957,7 @@ def render_telecom_tower_eval_analysis():
                 step=0.5,
                 key="telecom_09_manual_reference_fp",
                 help="No reemplaza la integración de curva en la pestaña 03; se ajusta por disponibilidad y pérdidas para dejar un KPI neto referencial.",
+                disabled=auto_wind_locked,
             )
             manual_target_speed = float(manual_mean_speed) * ((float(manual_target_height) / max(float(manual_measurement_height), 0.1)) ** float(manual_alpha))
             manual_weibull_c = (
@@ -16925,7 +16981,7 @@ def render_telecom_tower_eval_analysis():
                 }
             ]
             st.session_state["telecom_09_manual_wind_outputs"] = {
-                "enabled": bool(manual_enabled),
+                "enabled": bool(manual_enabled) and not auto_wind_locked,
                 "source": "Supuestos manuales",
                 "altura_objetivo_m": float(manual_target_height),
                 "altura_medicion_m": float(manual_measurement_height),
@@ -18429,6 +18485,8 @@ def render_telecom_tower_eval_analysis():
             fig_cost.update_layout(yaxis=dict(title="CLP/kWh", rangemode="tozero"))
             st.plotly_chart(tune_site_chart(fig_cost, 380), use_container_width=True, config={"displaylogo": False})
 
+        return
+
         section("01B · Consumo y carga", "Boleta, demanda mensual y perfil horario", "Lectura integrada dentro de Datos del sitio: boletas mensuales, tarifa red, perfil horario y salidas que alimentan el simulador.")
         bill_avg = float(billing_summary.get("Promedio mensual boletas") or billing_df["Consumo kWh"].mean() or 0.0)
         bill_max = float(billing_summary.get("Consumo máximo") or billing_df["Consumo kWh"].max() or 0.0)
@@ -19760,7 +19818,7 @@ def render_telecom_scenario_simulator(
     default_mix_grid = site_percent_value("Mix Red", 60.0)
     default_mix_diesel = site_percent_value("Mix Electrógeno", 40.0)
     default_mix_bess = site_percent_value("Mix Batería/Solar", 0.0)
-    default_surplus_price = site_numeric("Precio venta excedente", 90.0)
+    default_surplus_price = 0.0
     default_surplus_factor = site_numeric("Factor valorización excedente", 1.0)
     default_bos_pct = 25.0
     if not wind_defaults.empty and "BoS/instalación %" in wind_defaults.columns:
@@ -19786,7 +19844,7 @@ def render_telecom_scenario_simulator(
         default_mix_grid = selected_site_numeric(["Mix Red", "Red %", "% red"], default_mix_grid)
         default_mix_diesel = selected_site_numeric(["Mix Electrógeno", "Mix Electrogeno", "Diésel %", "Diesel %"], default_mix_diesel)
         default_mix_bess = selected_site_numeric(["Mix Batería/Solar", "Mix Bateria", "BESS %", "FV %", "Solar %", "Batería %", "Bateria %"], default_mix_bess)
-        default_surplus_price = selected_site_numeric(["Precio venta excedente", "Monetización excedente", "Excedente CLP/kWh"], default_surplus_price)
+        default_surplus_price = 0.0
         default_surplus_factor = selected_site_numeric(["Factor valorización excedente", "Factor excedente"], default_surplus_factor)
         default_om_pct = selected_site_numeric(["O&M anual", "OM anual", "Opex anual"], default_om_pct)
 
@@ -19913,6 +19971,11 @@ def render_telecom_scenario_simulator(
         unsafe_allow_html=True,
     )
 
+    if not st.session_state.get("sim6_zero_defaults_applied"):
+        st.session_state["sim6_safety_margin"] = 0.0
+        st.session_state["sim6_surplus_price"] = 0.0
+        st.session_state["sim6_zero_defaults_applied"] = True
+
     with st.expander("Parámetros de simulación técnica, económica y CAPEX", expanded=False):
         st.markdown(
             '<div class="sim6-input-note">El CAPEX unitario de turbina se toma desde la pestaña CAPEX como CAPEX instalado unitario. No se edita en esta vista para mantener consistencia entre recomendación, suministro e instalación.</div>',
@@ -19926,7 +19989,7 @@ def render_telecom_scenario_simulator(
             with d2:
                 target_coverage = st.slider("Cobertura objetivo (%)", min_value=20.0, max_value=160.0, value=float(max(20.0, min(160.0, default_target_coverage))), step=5.0, key="sim6_target_coverage")
             with d3:
-                safety_margin = st.slider("Margen de seguridad (%)", min_value=0.0, max_value=40.0, value=10.0, step=2.5, key="sim6_safety_margin")
+                safety_margin = st.slider("Margen de seguridad (%)", min_value=0.0, max_value=40.0, value=0.0, step=2.5, key="sim6_safety_margin")
             with d4:
                 project_life = st.number_input("Vida útil análisis (años)", min_value=5, max_value=30, value=int(default_project_life), step=1, key="sim6_project_life")
 
