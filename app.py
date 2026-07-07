@@ -18498,7 +18498,6 @@ def render_telecom_tower_eval_analysis():
               <div class="telecom-card"><p class="telecom-card-k">Demanda anual base</p><p class="telecom-card-v">{consumo_mensual * 12:,.0f} kWh</p><p class="telecom-card-s">Base para dimensionamiento y cobertura.</p></div>
               <div class="telecom-card"><p class="telecom-card-k">Energía objetivo</p><p class="telecom-card-v">{energia_objetivo:,.0f} kWh</p><p class="telecom-card-s">Demanda anual por cobertura objetivo publicada.</p></div>
               <div class="telecom-card"><p class="telecom-card-k">Costo ponderado</p><p class="telecom-card-v">{format_clp(costo_ponderado)}</p><p class="telecom-card-s">Referencia hoja: cálculo control {format_clp(costo_ponderado_calc)}.</p></div>
-              <div class="telecom-card"><p class="telecom-card-k">FP base ejecutivo</p><p class="telecom-card-v">{tab_inputs_fp_base:.1f}%</p><p class="telecom-card-s">{html.escape(tab_inputs_fp_source)}.</p></div>
             </div>
             """.replace(",", "."),
             unsafe_allow_html=True,
