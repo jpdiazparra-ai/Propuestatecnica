@@ -3980,19 +3980,21 @@ def render_single_select_pills_compat(
     key: str,
     format_func=None,
 ):
+    resolved_default = default if default in options else options[0]
     if hasattr(st, "pills"):
         kwargs = {
             "label": label,
             "options": options,
-            "default": default,
             "selection_mode": "single",
             "key": key,
         }
+        if key not in st.session_state or st.session_state[key] not in options:
+            kwargs["default"] = resolved_default
         if format_func is not None:
             kwargs["format_func"] = format_func
         return st.pills(**kwargs)
     if key not in st.session_state or st.session_state[key] not in options:
-        st.session_state[key] = default if default in options else options[0]
+        st.session_state[key] = resolved_default
     kwargs = {
         "label": label,
         "options": options,
