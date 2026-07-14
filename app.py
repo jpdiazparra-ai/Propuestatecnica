@@ -16587,10 +16587,11 @@ def render_telecom_tower_eval_analysis():
             }
 
         selected_pop_for_wind = str(st.session_state.get("telecom_client_selected_pop", "") or "").strip()
+        wind_data_dir = Path(__file__).parent / "data" / "wind"
         pop_wind_files = {
-            "ZP013": Path("data/wind/ZP013.csv"),
-            "MG888": Path("data/wind/MG888.csv"),
-            "FS608": Path("data/wind/FS608.csv"),
+            "ZP013": wind_data_dir / "ZP013.csv",
+            "MG888": wind_data_dir / "MG888.csv",
+            "FS608": wind_data_dir / "FS608.csv",
         }
         selected_pop_key = ""
         selected_pop_norm = normalize_key(selected_pop_for_wind)
@@ -16678,9 +16679,9 @@ def render_telecom_tower_eval_analysis():
                 sep_arg = None
             selected_pop_for_wind = str(st.session_state.get("telecom_client_selected_pop", "") or "").strip()
             pop_wind_files = {
-                "ZP013": Path("data/wind/ZP013.csv"),
-                "MG888": Path("data/wind/MG888.csv"),
-                "FS608": Path("data/wind/FS608.csv"),
+                "ZP013": wind_data_dir / "ZP013.csv",
+                "MG888": wind_data_dir / "MG888.csv",
+                "FS608": wind_data_dir / "FS608.csv",
             }
             selected_pop_key = ""
             selected_pop_norm = normalize_key(selected_pop_for_wind)
@@ -16733,7 +16734,7 @@ def render_telecom_tower_eval_analysis():
                 elif auto_wind_path and auto_wind_path.exists():
                     raw_df = pd.read_csv(auto_wind_path, sep=sep_arg, engine="python")
                     source_label = f"{selected_pop_key} · {auto_wind_path.name}"
-                    st.session_state["telecom_09_wind_saved_bytes"] = auto_wind_path.read_bytes()
+                    st.session_state["telecom_09_wind_saved_bytes"] = b""
                     st.session_state["telecom_09_wind_saved_text"] = ""
                     st.session_state["telecom_09_wind_saved_source"] = source_label
                 elif st.session_state.get("telecom_09_wind_saved_bytes"):
@@ -17337,7 +17338,6 @@ def render_telecom_tower_eval_analysis():
         )
         if st.session_state.get("telecom_09_viento_output_signature") != output_signature:
             st.session_state["telecom_09_viento_output_signature"] = output_signature
-            st.rerun()
         st.caption(
             f"Altura objetivo activa: {float(target_wind_height_m):.1f} m · FP {selected_analysis['FP neto']:.1f}% · "
             f"velocidad {selected_analysis['Velocidad media']:.2f} m/s · "
