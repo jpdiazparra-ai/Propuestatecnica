@@ -16,6 +16,7 @@ import math
 import html
 import textwrap
 import time
+import traceback
 import requests
 import plotly.graph_objects as go
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
@@ -18766,7 +18767,15 @@ def render_telecom_tower_eval_analysis():
 
     if selected_telecom_market_tab == "02 Recurso de Viento":
         render_active_pop_note("recurso eólico")
-        render_wind_csv_analysis_tab()
+        try:
+            render_wind_csv_analysis_tab()
+        except Exception as exc:
+            st.error(
+                "No se pudo renderizar la pestaña 02 Recurso de Viento. "
+                "La selección del PoP se mantiene activa; revisa el detalle técnico abajo."
+            )
+            with st.expander("Detalle técnico para depuración", expanded=False):
+                st.code("".join(traceback.format_exception(type(exc), exc, exc.__traceback__)))
         return
 
     if selected_telecom_market_tab == "04 Recomendación Comercial":
