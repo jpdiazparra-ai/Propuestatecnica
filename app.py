@@ -17586,16 +17586,6 @@ def render_telecom_tower_eval_analysis():
             fig_heat_main.update_layout(height=340, margin=dict(l=10, r=10, t=18, b=42), xaxis=dict(title="Hora"), yaxis=dict(title="Mes", autorange="reversed"), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
             st.plotly_chart(fig_heat_main, use_container_width=True, config={"displaylogo": False})
 
-        st.markdown(
-            """
-            <div class="telecom-note">
-              <b>Etapa 2 activa:</b> se muestran gráficos iniciales y comportamiento temporal. Los indicadores avanzados siguen pausados para mantener estable Streamlit Cloud.
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        return
-
         def _height_from_col(col_name: str) -> float:
             text = str(col_name)
             match = re.search(r"(\d+(?:[.,]\d+)?)\s*m?$", text)
@@ -17775,6 +17765,16 @@ def render_telecom_tower_eval_analysis():
                 fig_marginal.add_trace(go.Scatter(x=marginal_df["Columna"], y=marginal_df["Incremento energía %"], name="Incremento %", yaxis="y2", mode="lines+markers+text", line=dict(color=blue_4, width=3), marker=dict(size=8, color="#ffffff", line=dict(color=blue_4, width=2)), text=[("" if pd.isna(v) else f"+{v:.0f}%") for v in marginal_df["Incremento energía %"]], textposition="top center"))
                 fig_marginal.update_layout(height=340, margin=dict(l=10, r=54, t=18, b=56), legend=dict(orientation="h", y=1.14, x=0), yaxis=dict(title="kWh/año", rangemode="tozero", gridcolor="rgba(148,163,184,.22)"), yaxis2=dict(title="Incremento", overlaying="y", side="right", showgrid=False, ticksuffix="%"), xaxis=dict(title=None), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
                 st.plotly_chart(fig_marginal, use_container_width=True, config={"displaylogo": False})
+
+            st.markdown(
+                """
+                <div class="telecom-note">
+                  <b>Etapa 3 activa:</b> se muestran gráficos iniciales, comportamiento temporal y escalamiento vertical. Producción energética e indicadores avanzados profundos siguen pausados para mantener estable Streamlit Cloud.
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            return
 
             st.markdown('<p class="telecom-panel-title">Bloque 5 · Producción energética</p><p class="telecom-panel-sub">Convierte el recurso eólico en producción útil: factor de planta, energía neta, curva de potencia y parámetros vinculables al modelo.</p>', unsafe_allow_html=True)
             comp_display = comparison[["Ranking técnico", "Columna", "Velocidad media", "Weibull k", "Weibull c", "Energía anual neta kWh", "FP neto", "Clasificación", "% válido"]].copy()
