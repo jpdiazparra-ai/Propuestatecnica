@@ -17766,16 +17766,6 @@ def render_telecom_tower_eval_analysis():
                 fig_marginal.update_layout(height=340, margin=dict(l=10, r=54, t=18, b=56), legend=dict(orientation="h", y=1.14, x=0), yaxis=dict(title="kWh/año", rangemode="tozero", gridcolor="rgba(148,163,184,.22)"), yaxis2=dict(title="Incremento", overlaying="y", side="right", showgrid=False, ticksuffix="%"), xaxis=dict(title=None), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
                 st.plotly_chart(fig_marginal, use_container_width=True, config={"displaylogo": False})
 
-            st.markdown(
-                """
-                <div class="telecom-note">
-                  <b>Etapa 3 activa:</b> se muestran gráficos iniciales, comportamiento temporal y escalamiento vertical. Producción energética e indicadores avanzados profundos siguen pausados para mantener estable Streamlit Cloud.
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            return
-
             st.markdown('<p class="telecom-panel-title">Bloque 5 · Producción energética</p><p class="telecom-panel-sub">Convierte el recurso eólico en producción útil: factor de planta, energía neta, curva de potencia y parámetros vinculables al modelo.</p>', unsafe_allow_html=True)
             comp_display = comparison[["Ranking técnico", "Columna", "Velocidad media", "Weibull k", "Weibull c", "Energía anual neta kWh", "FP neto", "Clasificación", "% válido"]].copy()
             prod_l, prod_r = st.columns(2)
@@ -17866,6 +17856,16 @@ def render_telecom_tower_eval_analysis():
                 """.replace(",", "."),
                 unsafe_allow_html=True,
             )
+
+            st.markdown(
+                """
+                <div class="telecom-note">
+                  <b>Etapa 4 activa:</b> se muestran gráficos iniciales, comportamiento temporal, escalamiento vertical y producción energética. Indicadores avanzados profundos siguen pausados para mantener estable Streamlit Cloud.
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            return
 
             st.markdown('<p class="telecom-panel-title">Bloque 6 · Indicadores avanzados</p><p class="telecom-panel-sub">EPF, turbulencia, horas útiles, excedencia y concentración energética para evaluar estabilidad y calidad operativa.</p>', unsafe_allow_html=True)
             thresholds = [3, 5, 7, 9, 11, 15, 20]
