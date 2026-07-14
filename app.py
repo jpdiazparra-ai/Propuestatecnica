@@ -17402,6 +17402,54 @@ def render_telecom_tower_eval_analysis():
             else:
                 st.success(datetime_source_note)
 
+        st.markdown(
+            '<p class="telecom-panel-title">Ranking técnico compacto</p>'
+            '<p class="telecom-panel-sub">Vista liviana para Streamlit Cloud: calcula el recurso del PoP y deja activo el puente hacia producción, recomendación, CAPEX y ejecución.</p>',
+            unsafe_allow_html=True,
+        )
+        compact_cols = [
+            "Ranking técnico",
+            "Columna",
+            "Velocidad media",
+            "Weibull k",
+            "Weibull c",
+            "Energía anual neta kWh",
+            "FP neto",
+            "Clasificación",
+            "% válido",
+        ]
+        compact_resource = comparison[[col for col in compact_cols if col in comparison.columns]].copy()
+        def _fmt_compact_number(value: object, digits: int = 1, suffix: str = "", thousands: bool = False) -> str:
+            num = parse_float_local(value, np.nan)
+            if not np.isfinite(num):
+                return "-"
+            if thousands:
+                return f"{num:,.0f}".replace(",", ".")
+            return f"{num:.{digits}f}{suffix}"
+
+        compact_formatters = {
+            "Velocidad media": lambda value: _fmt_compact_number(value, 2, " m/s"),
+            "Weibull k": lambda value: _fmt_compact_number(value, 2),
+            "Weibull c": lambda value: _fmt_compact_number(value, 2),
+            "Energía anual neta kWh": lambda value: _fmt_compact_number(value, thousands=True),
+            "FP neto": lambda value: _fmt_compact_number(value, 1, "%"),
+            "% válido": lambda value: _fmt_compact_number(value, 1, "%"),
+        }
+        for col, formatter in compact_formatters.items():
+            if col in compact_resource.columns:
+                compact_resource[col] = compact_resource[col].map(formatter)
+        st.dataframe(compact_resource.astype(str), use_container_width=True, hide_index=True)
+        st.markdown(
+            f"""
+            <div class="telecom-note">
+              <b>Puente activo:</b> la pestaña 02 ya calculó el recurso para <b>{html.escape(source_label)}</b>.
+              Puedes continuar a <b>03 Producción por Turbina</b> y <b>04 Recomendación Comercial</b>.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        return
+
         stat_df = pd.DataFrame(
             [
                 ("Media", selected_analysis["Velocidad media"], "m/s"),
