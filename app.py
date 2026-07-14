@@ -17553,16 +17553,6 @@ def render_telecom_tower_eval_analysis():
             fig_duration_top.update_layout(height=340, margin=dict(l=10, r=10, t=12, b=38), xaxis=dict(title="% horas acumuladas", range=[0, 100]), yaxis=dict(title="m/s", rangemode="tozero", gridcolor="rgba(148,163,184,.22)"), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
             st.plotly_chart(fig_duration_top, use_container_width=True, config={"displaylogo": False})
 
-        st.markdown(
-            """
-            <div class="telecom-note">
-              <b>Etapa 1 activa:</b> se muestran los gráficos iniciales del recurso. Los bloques temporales y avanzados siguen pausados para mantener estable Streamlit Cloud.
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        return
-
         st.markdown('<p class="telecom-panel-title">Bloque 3 · Comportamiento temporal</p><p class="telecom-panel-sub">Serie temporal, estacionalidad mensual y patrón horario para operación del recurso.</p>', unsafe_allow_html=True)
         chart_l, chart_r = st.columns(2)
         if plot_df["_datetime"].notna().any():
@@ -17595,6 +17585,16 @@ def render_telecom_tower_eval_analysis():
             fig_heat_main = go.Figure(go.Heatmap(z=heat.values, x=heat.columns, y=heat.index, colorscale=[[0, blue_1], [0.45, blue_2], [0.75, blue_5], [1, blue_4]], colorbar=dict(title="m/s"), hovertemplate="Mes %{y}<br>Hora %{x}:00<br>%{z:.2f} m/s<extra></extra>"))
             fig_heat_main.update_layout(height=340, margin=dict(l=10, r=10, t=18, b=42), xaxis=dict(title="Hora"), yaxis=dict(title="Mes", autorange="reversed"), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
             st.plotly_chart(fig_heat_main, use_container_width=True, config={"displaylogo": False})
+
+        st.markdown(
+            """
+            <div class="telecom-note">
+              <b>Etapa 2 activa:</b> se muestran gráficos iniciales y comportamiento temporal. Los indicadores avanzados siguen pausados para mantener estable Streamlit Cloud.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        return
 
         def _height_from_col(col_name: str) -> float:
             text = str(col_name)
