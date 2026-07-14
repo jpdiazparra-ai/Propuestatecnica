@@ -17857,16 +17857,6 @@ def render_telecom_tower_eval_analysis():
                 unsafe_allow_html=True,
             )
 
-            st.markdown(
-                """
-                <div class="telecom-note">
-                  <b>Etapa 4 activa:</b> se muestran gráficos iniciales, comportamiento temporal, escalamiento vertical y producción energética. Indicadores avanzados profundos siguen pausados para mantener estable Streamlit Cloud.
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            return
-
             st.markdown('<p class="telecom-panel-title">Bloque 6 · Indicadores avanzados</p><p class="telecom-panel-sub">EPF, turbulencia, horas útiles, excedencia y concentración energética para evaluar estabilidad y calidad operativa.</p>', unsafe_allow_html=True)
             thresholds = [3, 5, 7, 9, 11, 15, 20]
             exceed_df = pd.DataFrame(
@@ -17906,6 +17896,16 @@ def render_telecom_tower_eval_analysis():
                 fig_energy_cum.add_vline(x=pct, line_dash="dash", line_color=blue_3, annotation_text=f"{pct}% horas = {share:.0f}% energía")
             fig_energy_cum.update_layout(height=330, margin=dict(l=10, r=10, t=18, b=42), xaxis=dict(title="% mejores horas", range=[0, 100]), yaxis=dict(title="% energía acumulada", range=[0, 105], gridcolor="rgba(148,163,184,.22)"), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
             st.plotly_chart(fig_energy_cum, use_container_width=True, config={"displaylogo": False})
+
+            st.markdown(
+                """
+                <div class="telecom-note">
+                  <b>Etapa 5 activa:</b> se muestran gráficos iniciales, temporalidad, escalamiento vertical, producción e indicadores avanzados compactos. Confiabilidad e incertidumbre avanzada siguen pausadas para mantener estable Streamlit Cloud.
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            return
 
             weibull_quality = advanced_df[["Columna", "Weibull k", "Weibull c", "RMSE Weibull", "MAPE Weibull %", "R² Weibull", "Calidad Weibull"]].copy()
             weibull_quality["Weibull k"] = pd.to_numeric(weibull_quality["Weibull k"], errors="coerce").round(2)
