@@ -17897,16 +17897,6 @@ def render_telecom_tower_eval_analysis():
             fig_energy_cum.update_layout(height=330, margin=dict(l=10, r=10, t=18, b=42), xaxis=dict(title="% mejores horas", range=[0, 100]), yaxis=dict(title="% energía acumulada", range=[0, 105], gridcolor="rgba(148,163,184,.22)"), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
             st.plotly_chart(fig_energy_cum, use_container_width=True, config={"displaylogo": False})
 
-            st.markdown(
-                """
-                <div class="telecom-note">
-                  <b>Etapa 5 activa:</b> se muestran gráficos iniciales, temporalidad, escalamiento vertical, producción e indicadores avanzados compactos. Confiabilidad e incertidumbre avanzada siguen pausadas para mantener estable Streamlit Cloud.
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            return
-
             weibull_quality = advanced_df[["Columna", "Weibull k", "Weibull c", "RMSE Weibull", "MAPE Weibull %", "R² Weibull", "Calidad Weibull"]].copy()
             weibull_quality["Weibull k"] = pd.to_numeric(weibull_quality["Weibull k"], errors="coerce").round(2)
             weibull_quality["Weibull c"] = pd.to_numeric(weibull_quality["Weibull c"], errors="coerce").round(2)
@@ -18001,6 +17991,14 @@ def render_telecom_tower_eval_analysis():
         )
         st.markdown(
             f'<div class="telecom-note"><b>Conclusión técnica del recurso eólico:</b> {html.escape(conclusion)}</div>'.replace(",", "."),
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            """
+            <div class="telecom-note">
+              <b>Etapa 6 activa:</b> la pestaña 02 Recurso de Viento queda restaurada completa.
+            </div>
+            """,
             unsafe_allow_html=True,
         )
 
