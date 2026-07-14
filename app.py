@@ -17404,7 +17404,7 @@ def render_telecom_tower_eval_analysis():
 
         st.markdown(
             '<p class="telecom-panel-title">Ranking técnico compacto</p>'
-            '<p class="telecom-panel-sub">Vista liviana para Streamlit Cloud: calcula el recurso del PoP y deja activo el puente hacia producción, recomendación, CAPEX y ejecución.</p>',
+            '<p class="telecom-panel-sub">Ranking del recurso del PoP y puente activo hacia producción, recomendación, CAPEX y ejecución.</p>',
             unsafe_allow_html=True,
         )
         compact_cols = [
@@ -17448,7 +17448,6 @@ def render_telecom_tower_eval_analysis():
             """,
             unsafe_allow_html=True,
         )
-        return
 
         stat_df = pd.DataFrame(
             [
@@ -17553,6 +17552,16 @@ def render_telecom_tower_eval_analysis():
             fig_duration_top = go.Figure(go.Scatter(x=duration_x, y=duration_speed, mode="lines", line=dict(color=blue_5, width=3), hovertemplate="Horas acumuladas: %{x:.1f}%<br>Velocidad: %{y:.2f} m/s<extra></extra>"))
             fig_duration_top.update_layout(height=340, margin=dict(l=10, r=10, t=12, b=38), xaxis=dict(title="% horas acumuladas", range=[0, 100]), yaxis=dict(title="m/s", rangemode="tozero", gridcolor="rgba(148,163,184,.22)"), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
             st.plotly_chart(fig_duration_top, use_container_width=True, config={"displaylogo": False})
+
+        st.markdown(
+            """
+            <div class="telecom-note">
+              <b>Etapa 1 activa:</b> se muestran los gráficos iniciales del recurso. Los bloques temporales y avanzados siguen pausados para mantener estable Streamlit Cloud.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        return
 
         st.markdown('<p class="telecom-panel-title">Bloque 3 · Comportamiento temporal</p><p class="telecom-panel-sub">Serie temporal, estacionalidad mensual y patrón horario para operación del recurso.</p>', unsafe_allow_html=True)
         chart_l, chart_r = st.columns(2)
