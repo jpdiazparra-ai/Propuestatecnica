@@ -16602,9 +16602,22 @@ def render_telecom_tower_eval_analysis():
                 break
         auto_wind_path = pop_wind_files.get(selected_pop_key)
         auto_wind_locked = bool(auto_wind_path and auto_wind_path.exists())
+        wind_header_slot = st.empty()
 
-        st.markdown(
-            """
+        def render_wind_resource_header(outputs: dict | None = None) -> None:
+            outputs = outputs or {}
+            header_pop_value = selected_pop_key or selected_pop_for_wind or "PoP"
+            header_weibull_k = parse_float_local(outputs.get("weibull_k", np.nan), np.nan)
+            header_weibull_c = parse_float_local(outputs.get("weibull_c", np.nan), np.nan)
+            header_fp = parse_float_local(outputs.get("factor_planta_recomendado", np.nan), np.nan)
+            header_weibull_value = (
+                f"k {header_weibull_k:.2f} · c {header_weibull_c:.2f}"
+                if np.isfinite(header_weibull_k) and np.isfinite(header_weibull_c)
+                else "En cálculo"
+            )
+            header_fp_value = f"{header_fp:.1f}%" if np.isfinite(header_fp) else "En cálculo"
+            wind_header_slot.markdown(
+                f"""
             <div class="telecom-site-shell">
               <div class="telecom-site-head">
                 <div>
@@ -16613,15 +16626,17 @@ def render_telecom_tower_eval_analysis():
                   <p class="telecom-site-s">Transforma la data del PoP seleccionado en una lectura comercial clara: velocidad representativa, distribución Weibull, calidad del recurso y factor de planta esperado para sustentar la recomendación eólica.</p>
                 </div>
                 <div class="telecom-site-status">
-                  <div class="telecom-site-pill"><strong>PoP</strong><span>Dato seleccionado</span></div>
-                  <div class="telecom-site-pill"><strong>Weibull</strong><span>Perfil del viento</span></div>
-                  <div class="telecom-site-pill"><strong>FP</strong><span>Potencial eólico</span></div>
+                  <div class="telecom-site-pill"><strong>{html.escape(header_pop_value)}</strong><span>PoP seleccionado</span></div>
+                  <div class="telecom-site-pill"><strong>{html.escape(header_weibull_value)}</strong><span>Weibull</span></div>
+                  <div class="telecom-site-pill"><strong>{html.escape(header_fp_value)}</strong><span>FP neto</span></div>
                 </div>
               </div>
             </div>
             """,
-            unsafe_allow_html=True,
-        )
+                unsafe_allow_html=True,
+            )
+
+        render_wind_resource_header(st.session_state.get("telecom_09_viento_outputs", {}) or {})
         with st.expander("Centro de control del recurso eólico", expanded=False):
             st.markdown(
                 '<div class="sim6-input-note">Carga, columna de análisis, limpieza de outliers y curva de potencia quedan agrupados aquí. Estos inputs siguen alimentando el puente automático hacia las demás pestañas cuando el CSV es válido.</div>',
@@ -17328,6 +17343,7 @@ def render_telecom_tower_eval_analysis():
             "perfil_mensual_alturas": wind_monthly_profile_records,
         }
         st.session_state["telecom_09_viento_outputs"] = wind_outputs
+        render_wind_resource_header(wind_outputs)
         output_signature = "|".join(
             [
                 str(wind_outputs.get("altura_columna_recomendada", "")),
